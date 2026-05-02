@@ -1,6 +1,6 @@
 {
   "name": "@altara/ros",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ROS2 rosbridge adapter for Altara — typed factories for sensor_msgs/* in one line.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",
@@ -35,7 +35,11 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",

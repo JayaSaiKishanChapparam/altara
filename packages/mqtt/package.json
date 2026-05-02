@@ -1,6 +1,6 @@
 {
   "name": "@altara/mqtt",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "MQTT-over-WebSocket adapter for Altara",
   "license": "MIT",
@@ -14,7 +14,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run --passWithNoTests",
