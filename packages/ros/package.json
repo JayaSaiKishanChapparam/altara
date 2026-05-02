@@ -1,8 +1,30 @@
 {
   "name": "@altara/ros",
   "version": "0.0.1",
-  "description": "ROS2 rosbridge adapter for Altara",
+  "description": "ROS2 rosbridge adapter for Altara — typed factories for sensor_msgs/* in one line.",
   "license": "MIT",
+  "author": "Jaya Sai Kishan Chapparam",
+  "homepage": "https://github.com/JayaSaiKishanChapparam/altara/tree/main/packages/ros#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayaSaiKishanChapparam/altara.git",
+    "directory": "packages/ros"
+  },
+  "bugs": {
+    "url": "https://github.com/JayaSaiKishanChapparam/altara/issues"
+  },
+  "keywords": [
+    "react",
+    "ros2",
+    "ros",
+    "rosbridge",
+    "robotics",
+    "telemetry",
+    "real-time",
+    "websocket",
+    "sensor-msgs",
+    "altara"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -13,7 +35,7 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",

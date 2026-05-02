@@ -1,8 +1,36 @@
 {
   "name": "@altara/core",
   "version": "0.0.1",
-  "description": "Real-time telemetry UI components for React",
+  "description": "React components for real-time telemetry dashboards — built for robotics, aerospace, and industrial IoT.",
   "license": "MIT",
+  "author": "Jaya Sai Kishan Chapparam",
+  "homepage": "https://github.com/JayaSaiKishanChapparam/altara#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayaSaiKishanChapparam/altara.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/JayaSaiKishanChapparam/altara/issues"
+  },
+  "keywords": [
+    "react",
+    "telemetry",
+    "real-time",
+    "robotics",
+    "ros2",
+    "rosbridge",
+    "mqtt",
+    "iot",
+    "aerospace",
+    "websocket",
+    "canvas",
+    "60fps",
+    "time-series",
+    "gauge",
+    "dashboard",
+    "visualization"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -14,7 +42,7 @@
     },
     "./styles.css": "./dist/tokens.css"
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "LICENSE"],
   "sideEffects": ["**/*.css"],
   "scripts": {
     "build": "tsup && cp src/tokens/tokens.css dist/tokens.css",
