@@ -1,0 +1,50 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Comparisons/Altara vs Grafana" />
+
+# Altara vs Grafana
+
+Grafana is a standalone monitoring platform. Altara is a React component library. They solve different problems — this page is here to help you pick the right tool for the job, not to argue Altara is "better".
+
+## Use Grafana when
+
+- You're standing up infrastructure monitoring on top of Prometheus, InfluxDB, Loki, or another time-series database that already has a Grafana data source.
+- The audience for the dashboards is non-developers who need a UI for ad-hoc query building, alerting rules, and notification routing.
+- You want a finished product out of the box — login, RBAC, dashboard versioning, an alerting pipeline — without building it yourself.
+- The team isn't React-shaped and standing up a new React app is overkill.
+
+## Use Altara when
+
+- You're building a custom React application and want telemetry to be **part of the app**, not an iframe in a corner.
+- The data is high-frequency sensor telemetry — IMU, control surfaces, vibration — at rates Grafana's SVG-based panels start to struggle with.
+- You need domain-specific components (attitude indicator, GPS map, threshold-aware gauges) that aren't in Grafana's plugin ecosystem.
+- The look and feel needs to match your product's design system — full control over tokens, typography, motion.
+- You're integrating ROS2 or MQTT directly from the browser; Altara ships typed adapters for both.
+
+## Honest comparison
+
+| Dimension | Altara | Grafana |
+|---|---|---|
+| **Embeds in a React app** | Yes, one import. | Iframe only — no native React integration. |
+| **60 fps canvas rendering** | Yes — `requestAnimationFrame` + RingBuffer for 1 kHz+ feeds. | SVG-based panels; performance degrades visibly at high frequency. |
+| **Attitude indicator** | Built in. | Not available natively (no robotics-domain panels). |
+| **GPS map (live track)** | Built in via Leaflet. | Available via the Geomap panel. |
+| **Alerting / notifications** | Not included — bring your own. | First-class. Alerts → email / Slack / PagerDuty / webhooks. |
+| **Auth, RBAC, sharing** | App's responsibility — Altara is a library, not an app. | Built in. |
+| **Plugin ecosystem** | Focused (telemetry-only) and growing. | Enormous — hundreds of community panels and data sources. |
+| **Setup complexity** | `npm install` + 10 lines. | Separate server, data-source configuration, dashboard provisioning. |
+| **Bundle size** | < 30 KB gzip (core, no peer deps). | Standalone application — not bundled into your app. |
+| **Theming** | CSS custom properties. Fully overridable. | Built-in dark/light + a few themes. |
+| **License** | MIT. | AGPL-3.0 (with Grafana Labs commercial offerings on top). |
+
+## Stack them together
+
+Many teams run both. Grafana for ops/SRE-style monitoring of infrastructure, alerts, and ad-hoc queries; Altara embedded inside the product itself for the customer-facing real-time view. They're not mutually exclusive — pick each for what it's good at.
+
+## What Altara doesn't do (and probably won't)
+
+- **Server-side dashboard rendering, alerting, recording.** Altara is browser-side only.
+- **Schema discovery on time-series databases.** You bring data sources; Altara renders.
+- **Multi-tenant authentication.** That's an application-layer concern.
+
+If those are central to your problem, you want Grafana (or another platform), not Altara.

@@ -1,0 +1,35 @@
+{
+  "name": "altara",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Altara — real-time telemetry UI library monorepo",
+  "license": "MIT",
+  "packageManager": "pnpm@8.15.4",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "storybook": "turbo run storybook",
+    "build-storybook": "turbo run build-storybook",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@size-limit/preset-small-lib": "^11.1.2",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "playwright": "^1.59.1",
+    "prettier": "^3.2.5",
+    "size-limit": "^11.1.2",
+    "turbo": "^1.13.2",
+    "typescript": "^5.4.5"
+  }
+}

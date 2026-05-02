@@ -1,0 +1,199 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as TimeSeriesStories from '../components/TimeSeries.stories';
+
+<Meta title="Guides/Connecting ROS2" />
+
+# Connecting ROS2
+
+Altara ships a typed rosbridge adapter as a sibling package — `@altara/ros`. This guide walks through getting a real ROS2 topic on screen end to end.
+
+> **Prerequisites**
+> - ROS2 Humble or Jazzy (or use the Docker image below — no native install required).
+> - The `rosbridge_suite` package, which provides `rosbridge_server`.
+> - `npm install @altara/core @altara/ros` in your React app.
+
+## Start rosbridge
+
+### Option A — native ROS2
+
+```bash
+sudo apt install ros-${ROS_DISTRO}-rosbridge-suite
+ros2 launch rosbridge_server rosbridge_websocket_launch.xml
+```
+
+`rosbridge_server` listens on `ws://localhost:9090` by default.
+
+### Option B — Docker
+
+The repo ships a ready-to-go compose file at `docker/ros2/docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+  rosbridge:
+    image: ros:humble-ros-base
+    command: >-
+      bash -c "apt-get update &&
+               apt-get install -y --no-install-recommends ros-humble-rosbridge-suite &&
+               source /opt/ros/humble/setup.bash &&
+               ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+```
+
+```bash
+docker compose -f docker/ros2/docker-compose.yml up
+```
+
+Either way, opening `ws://localhost:9090` in a WebSocket client should produce a `{"op":"set_level","level":"info"}` greeting.
+
+## Basic connection
+
+`createRosbridgeAdapter` returns an `AltaraDataSource`. Hand it to any component that accepts a `dataSource` prop.
+
+```tsx
+import { AltaraProvider, TimeSeries } from '@altara/core';
+import { createRosbridgeAdapter } from '@altara/ros';
+
+const source = createRosbridgeAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/imu/data',
+  messageType: 'sensor_msgs/Imu',
+  // valueExtractor pulls the number you want to chart out of each message
+  valueExtractor: (msg) => msg.angular_velocity.z,
+});
+
+export function App() {
+  return (
+    <AltaraProvider theme="dark">
+      <TimeSeries dataSource={source} height={240} />
+    </AltaraProvider>
+  );
+}
+```
+
+The adapter:
+
+- Subscribes via the rosbridge v2 envelope (`{ op: 'subscribe', topic, type }`).
+- Auto-reconnects with exponential backoff (1 s → 30 s).
+- Normalizes ROS `header.stamp.{sec, nanosec}` to unix milliseconds.
+- Drops samples that arrive faster than `throttleMs` (when set).
+- Cleans up on `destroy()` — including an `unsubscribe` envelope.
+
+## Common message types
+
+For the messages most consumers care about, `@altara/ros` ships pre-typed convenience factories. Each one pre-fills `messageType` and `valueExtractor`, so the consumer only specifies a topic.
+
+| Message type | Convenience factory | Extracted value |
+|---|---|---|
+| `sensor_msgs/BatteryState` | `createBatteryStateAdapter` | `percentage * 100` |
+| `sensor_msgs/Range` | `createRangeAdapter` | `range` (m) |
+| `sensor_msgs/Temperature` | `createTemperatureAdapter` | `temperature` (°C) |
+| `sensor_msgs/NavSatFix` | `createNavSatFixAdapter({ axis })` | `latitude` / `longitude` / `altitude` |
+| `std_msgs/Float32` | `createFloat32Adapter` | `data` |
+| `std_msgs/Float64` | `createFloat64Adapter` | `data` |
+
+Hand-written `valueExtractor`s for a few more common types:
+
+| Message type | `valueExtractor` |
+|---|---|
+| `sensor_msgs/Imu` | `(msg) => msg.angular_velocity.z` (gyro Z, rad/s) |
+| `nav_msgs/Odometry` | `(msg) => msg.twist.twist.linear.x` (forward velocity, m/s) |
+| `geometry_msgs/Twist` | `(msg) => msg.linear.x` |
+
+## Multi-topic dashboard
+
+Build one adapter per signal and feed them into different components:
+
+```tsx
+import { AltaraProvider, TimeSeries, Gauge } from '@altara/core';
+import {
+  createBatteryStateAdapter,
+  createRosbridgeAdapter,
+} from '@altara/ros';
+
+const battery = createBatteryStateAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/battery',
+});
+
+const gyro = createRosbridgeAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/imu/data',
+  messageType: 'sensor_msgs/Imu',
+  valueExtractor: (msg) => msg.angular_velocity.z,
+});
+
+export function Dashboard() {
+  return (
+    <AltaraProvider theme="dark">
+      <Gauge
+        dataSource={battery}
+        min={0}
+        max={100}
+        label="Battery"
+        unit="%"
+        thresholds={[
+          { value: 20, color: 'var(--vt-color-warn)' },
+          { value: 10, color: 'var(--vt-color-danger)' },
+        ]}
+      />
+      <TimeSeries dataSource={gyro} height={240} />
+    </AltaraProvider>
+  );
+}
+```
+
+## Live demo
+
+This is the component live, wired to `ws://localhost:9090`. If `rosbridge_server` is running on your machine you'll see the gyroscope Z-axis trace; otherwise the chart sits in the connecting state.
+
+<Canvas of={TimeSeriesStories.WithROS2} />
+
+## Timestamp source
+
+`timeSource` chooses which clock drives `TelemetryValue.timestamp`:
+
+- `'wallclock'` (default) — receiver-side `Date.now()` at message arrival.
+- `'message'` — ROS-supplied `header.stamp` if present, else wallclock.
+- `'relative'` — milliseconds since the first received sample.
+
+```ts
+createRosbridgeAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/imu/data',
+  messageType: 'sensor_msgs/Imu',
+  valueExtractor: (m) => m.angular_velocity.z,
+  timeSource: 'message',
+});
+```
+
+Use `'message'` when you need the published timestamp (e.g. multi-source synchronization); `'wallclock'` when receiver-side clock skew is irrelevant.
+
+## Throttling
+
+For very high-rate topics, set `throttleMs` to drop samples that arrive faster than the cadence you actually want to render:
+
+```ts
+createRosbridgeAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/imu/data',
+  messageType: 'sensor_msgs/Imu',
+  valueExtractor: (m) => m.angular_velocity.z,
+  throttleMs: 33, // ~30 Hz
+});
+```
+
+For ≥500 Hz feeds, use `createWorkerDataSource` instead — see the [Performance guide](?path=/docs/guides-performance--api-reference).
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Adapter stays `'connecting'` forever | `rosbridge_server` isn't running, or wrong port | `ros2 launch rosbridge_server rosbridge_websocket_launch.xml`; verify `ws://localhost:9090` reachable |
+| Browser console: CORS error | Connecting to a remote rosbridge that didn't authorize your origin | Set `rosbridge_server`'s `--allow-cross-origin` flag, or proxy through your own server |
+| Status flips `connected` → `disconnected` repeatedly | Network instability or rosbridge crashing | Check `ros2 topic echo /your_topic` works directly; inspect rosbridge logs |
+| Chart receives nothing | `messageType` mismatch or `valueExtractor` returning `NaN` | Verify the topic via `ros2 topic info /your_topic`; log the parsed message inside `valueExtractor` once |
+| Wrong topic name | rosbridge subscribes silently to non-existent topics | `ros2 topic list` to confirm |
+| Numbers look 100× off | ROS-native units differ from what you expect (e.g. `BatteryState.percentage` is `0..1`) | Use a typed factory (`createBatteryStateAdapter`) which scales for you |

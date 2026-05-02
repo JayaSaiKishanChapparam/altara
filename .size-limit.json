@@ -1,0 +1,18 @@
+[
+  {
+    "path": "packages/core/dist/index.mjs",
+    "limit": "30 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "leaflet",
+      "react-leaflet",
+      "react-grid-layout",
+      "three",
+      "@react-three/fiber",
+      "mqtt",
+      "@altara/core"
+    ]
+  }
+]

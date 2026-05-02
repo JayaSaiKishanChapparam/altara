@@ -1,0 +1,62 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Altara/Introduction" />
+
+# Altara
+
+**Real-time telemetry UI for React.** Purpose-built for robotics, aerospace, and industrial IoT — where generic charting libraries fall short.
+
+<img
+  src="/gifs/hero.gif"
+  alt="Altara components running with live mock data"
+  style={{ width: '100%', borderRadius: 8, marginBottom: 24 }}
+/>
+
+## Install
+
+```bash
+npm install @altara/core
+# Optional adapters:
+npm install @altara/ros    # rosbridge for ROS2
+```
+
+## Quick start
+
+```tsx
+import '@altara/core/styles.css';
+import { AltaraProvider, TimeSeries, Gauge } from '@altara/core';
+
+export function Dashboard() {
+  return (
+    <AltaraProvider theme="dark">
+      <TimeSeries mockMode height={240} />
+      <Gauge mockMode min={0} max={100} label="Battery" unit="%" />
+    </AltaraProvider>
+  );
+}
+```
+
+## What's here
+
+| Section | What you'll find |
+|---------|------------------|
+| **Guides** | Installation, ROS2, MQTT, mock data, theming, performance tuning |
+| **Cookbook** | Full working dashboards — drone, robot arm, IoT sensor grid |
+| **Comparisons** | Altara vs Grafana, Altara vs Foxglove |
+| **Components** | Interactive demos and full API reference for every component |
+| **Dashboard** | Hero shot — every component in one screen |
+
+## Why Altara
+
+Most React charting libraries render via SVG or React DOM. At 100 Hz+ sensor data rates, that path causes visible jank — every tick re-renders the chart's React subtree, and SVG paint costs scale with point count.
+
+Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
+
+It also ships the domain-specific components engineers actually need — attitude indicators, live GPS maps, threshold-aware gauges — and a typed rosbridge adapter so a one-line import gets you live ROS2 data on screen.
+
+## Links
+
+- [Browse components](?path=/story/components-timeseries--default)
+- [Connecting ROS2 guide](?path=/docs/guides-connecting-ros2--api-reference)
+- [GitHub](https://github.com/altara/altara)
+- [npm](https://npmjs.com/package/@altara/core)

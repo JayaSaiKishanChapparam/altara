@@ -1,0 +1,275 @@
+/* Altara design tokens — import once in your app root */
+/* import '@altara/core/styles.css'; */
+
+[data-altara-theme='dark'] {
+  --vt-bg-base:        #0E0F10;
+  --vt-bg-panel:       #181A1B;
+  --vt-bg-elevated:    #1F2224;
+  --vt-border:         #2E3133;
+  --vt-text-primary:   #E8E6DF;
+  --vt-text-muted:     #7A7872;
+  --vt-text-label:     #9A9890;
+}
+
+[data-altara-theme='light'] {
+  --vt-bg-base:        #F5F4F1;
+  --vt-bg-panel:       #FFFFFF;
+  --vt-bg-elevated:    #FAFAF8;
+  --vt-border:         #E2E0D9;
+  --vt-text-primary:   #1A1A18;
+  --vt-text-muted:     #888780;
+  --vt-text-label:     #5F5E5A;
+}
+
+/* Semantic data colors — same in both themes (encode meaning) */
+:root {
+  --vt-color-active:   #1D9E75;  /* signal healthy / positive */
+  --vt-color-warn:     #EF9F27;  /* approaching threshold */
+  --vt-color-danger:   #E24B4A;  /* threshold breached / error */
+  --vt-color-neutral:  #888780;  /* no data / inactive */
+  --vt-color-info:     #378ADD;  /* selected / highlighted */
+  --vt-color-stale:    #5F5E5A;  /* data too old */
+
+  /* Typography */
+  --vt-font-sans:      'Inter', system-ui, sans-serif;
+  --vt-font-mono:      'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Spacing */
+  --vt-space-1:  4px;
+  --vt-space-2:  8px;
+  --vt-space-3:  12px;
+  --vt-space-4:  16px;
+  --vt-space-6:  24px;
+
+  /* Radii */
+  --vt-radius-sm:  4px;
+  --vt-radius-md:  6px;
+  --vt-radius-lg:  8px;
+}
+
+/* Reduced-motion: honor the user's OS preference. Disables row flashes
+   and the gauge-needle CSS transition. Components that drive animation
+   in JS (TimeSeries rAF, Attitude rAF, mockMode intervals) keep running
+   because they are functional, not decorative — disabling them would
+   freeze the live display. */
+@media (prefers-reduced-motion: reduce) {
+  .vt-signal-row[data-flash='true'] { animation: none !important; }
+}
+
+/* Base component styles */
+.vt-component { box-sizing: border-box; }
+.vt-value { font-family: var(--vt-font-mono); font-variant-numeric: tabular-nums; }
+.vt-label { font-family: var(--vt-font-sans); font-size: 11px; font-weight: 500; }
+
+/* ── SignalPanel ───────────────────────────────────────── */
+.vt-signal-panel {
+  display: grid;
+  gap: var(--vt-space-2);
+  background: var(--vt-bg-panel);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-md);
+  padding: var(--vt-space-3);
+  font-family: var(--vt-font-sans);
+}
+.vt-signal-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--vt-space-3);
+  align-items: center;
+  padding: var(--vt-space-2) var(--vt-space-3);
+  background: var(--vt-bg-elevated);
+  border-radius: var(--vt-radius-sm);
+  color: var(--vt-text-primary);
+  transition: background-color 200ms ease-out;
+}
+.vt-signal-row[data-flash='true'] {
+  animation: vt-flash 350ms ease-out;
+}
+.vt-signal-row__label {
+  font-size: 12px;
+  color: var(--vt-text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vt-signal-row__value {
+  font-family: var(--vt-font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+.vt-signal-row__unit {
+  font-size: 11px;
+  color: var(--vt-text-muted);
+}
+.vt-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--vt-color-neutral);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15) inset;
+}
+.vt-status-dot[data-status='active'] { background: var(--vt-color-active); }
+.vt-status-dot[data-status='warn']   { background: var(--vt-color-warn); }
+.vt-status-dot[data-status='danger'] { background: var(--vt-color-danger); }
+.vt-status-dot[data-status='stale']  { background: var(--vt-color-stale); }
+.vt-status-dot[data-status='info']   { background: var(--vt-color-info); }
+
+@keyframes vt-flash {
+  0%   { background-color: var(--vt-color-info); }
+  100% { background-color: var(--vt-bg-elevated); }
+}
+
+/* ── ConnectionBar ─────────────────────────────────────── */
+.vt-connection-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--vt-space-3);
+  padding: var(--vt-space-2) var(--vt-space-3);
+  background: var(--vt-bg-panel);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-sm);
+  color: var(--vt-text-primary);
+  font-family: var(--vt-font-sans);
+  font-size: 12px;
+}
+.vt-connection-bar__url {
+  font-family: var(--vt-font-mono);
+  color: var(--vt-text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vt-connection-bar__metric {
+  font-family: var(--vt-font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--vt-text-primary);
+}
+.vt-connection-bar__metric-label {
+  color: var(--vt-text-label);
+  margin-right: var(--vt-space-1);
+}
+
+/* ── Gauge ─────────────────────────────────────────────── */
+.vt-gauge {
+  display: inline-block;
+  color: var(--vt-text-primary);
+  font-family: var(--vt-font-sans);
+}
+.vt-gauge__svg { display: block; }
+.vt-gauge__value {
+  font-family: var(--vt-font-mono);
+  font-variant-numeric: tabular-nums;
+  fill: var(--vt-text-primary);
+}
+.vt-gauge__label {
+  fill: var(--vt-text-label);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── EventLog ──────────────────────────────────────────── */
+.vt-event-log {
+  display: flex;
+  flex-direction: column;
+  background: var(--vt-bg-panel);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-md);
+  font-family: var(--vt-font-sans);
+  color: var(--vt-text-primary);
+  overflow: hidden;
+}
+.vt-event-log__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+.vt-event-log__row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--vt-space-3);
+  padding: var(--vt-space-2) var(--vt-space-3);
+  border-left: 3px solid var(--vt-color-neutral);
+  border-bottom: 1px solid var(--vt-border);
+  font-size: 12px;
+  align-items: baseline;
+}
+.vt-event-log__row[data-severity='info']  { border-left-color: var(--vt-color-info); }
+.vt-event-log__row[data-severity='warn']  { border-left-color: var(--vt-color-warn); }
+.vt-event-log__row[data-severity='error'] { border-left-color: var(--vt-color-danger); }
+.vt-event-log__time {
+  font-family: var(--vt-font-mono);
+  color: var(--vt-text-muted);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+.vt-event-log__message {
+  color: var(--vt-text-primary);
+  word-break: break-word;
+}
+.vt-event-log__toolbar {
+  display: flex;
+  gap: var(--vt-space-2);
+  padding: var(--vt-space-2) var(--vt-space-3);
+  background: var(--vt-bg-elevated);
+  border-bottom: 1px solid var(--vt-border);
+  font-size: 11px;
+  color: var(--vt-text-label);
+}
+.vt-event-log__filter {
+  background: transparent;
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-sm);
+  color: var(--vt-text-primary);
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+/* ── LiveMap ───────────────────────────────────────────── */
+.vt-live-map {
+  position: relative;
+  background: var(--vt-bg-panel);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-md);
+  overflow: hidden;
+  color: var(--vt-text-primary);
+  font-family: var(--vt-font-sans);
+  /* Fill the parent so Leaflet's internal `height: 100%` resolves. The
+     consumer is expected to give the parent an explicit height. */
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+.vt-live-map__placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--vt-space-4);
+  color: var(--vt-text-muted);
+  font-size: 12px;
+  height: 100%;
+}
+.vt-live-map__inner { width: 100%; height: 100%; }
+.vt-live-map__heading-arrow {
+  width: 16px;
+  height: 16px;
+  background: var(--vt-color-info);
+  clip-path: polygon(50% 0%, 100% 100%, 50% 70%, 0% 100%);
+  transform-origin: center;
+  pointer-events: none;
+}
+
+/* ── TimeSeries ────────────────────────────────────────── */
+.vt-timeseries {
+  display: block;
+  background: var(--vt-bg-panel);
+  border: 1px solid var(--vt-border);
+  border-radius: var(--vt-radius-md);
+  position: relative;
+}
+.vt-timeseries__canvas { display: block; width: 100%; height: 100%; }

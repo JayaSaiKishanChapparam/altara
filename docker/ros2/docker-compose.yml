@@ -1,0 +1,21 @@
+version: '3.8'
+
+# ROS2 Humble + rosbridge_server, exposing the WebSocket protocol on port 9090.
+# Used by the @altara/ros adapter for local development. Start with:
+#   docker compose -f docker/ros2/docker-compose.yml up
+# Then verify the bridge: open ws://localhost:9090 in a WebSocket client.
+
+services:
+  rosbridge:
+    image: ros:humble-ros-base
+    container_name: altara-rosbridge
+    command: >-
+      bash -c "apt-get update &&
+               apt-get install -y --no-install-recommends ros-humble-rosbridge-suite &&
+               source /opt/ros/humble/setup.bash &&
+               ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
+    ports:
+      - '9090:9090'
+    restart: unless-stopped
+    environment:
+      - ROS_DOMAIN_ID=0

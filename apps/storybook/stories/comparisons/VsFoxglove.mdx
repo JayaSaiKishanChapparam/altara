@@ -1,0 +1,47 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Comparisons/Altara vs Foxglove" />
+
+# Altara vs Foxglove
+
+Foxglove is a robotics observability platform. Altara is a React component library. Foxglove is the better choice if you want a finished product; Altara is the better choice if you want to build your own.
+
+## Use Foxglove when
+
+- You want a full out-of-the-box solution — Foxglove Studio, the cloud platform, the agent — all rolled together.
+- You need 3D robot visualization with URDF, point clouds, and TF trees today.
+- Recording and playback of MCAP / ROS bag files is critical to your workflow.
+- The audience for the dashboards isn't building a custom application — they're roboticists evaluating data.
+- You're happy with the platform's UX and don't need it embedded in your own product.
+
+## Use Altara when
+
+- You're building a branded customer-facing product and the dashboards must live **inside** your React app.
+- The bundle needs to stay small — Altara core is < 30 KB gzipped, optional peer deps load on demand.
+- You want full control over UX, layout, theming, motion, and accessibility.
+- You're working with rosbridge / MQTT directly from the browser and don't want a desktop client in the loop.
+- You need a permissively licensed (MIT) library with no vendor dependency.
+
+## Honest comparison
+
+| Dimension | Altara | Foxglove |
+|---|---|---|
+| **Embedded in a custom React app** | Yes — primary use case. | No — Studio is a desktop / web app. |
+| **Customizable UX / branding** | Full — CSS tokens override every surface. | Theme switcher; not a design-system replacement. |
+| **3D URDF / robot visualization** | Not in v1 (planned for the Pro tier). | First-class. Industry-leading. |
+| **MCAP playback** | Not in v1 (planned for the Pro tier). | First-class. Foxglove maintains the MCAP spec. |
+| **2D telemetry components** | TimeSeries, Gauge, Attitude, SignalPanel, LiveMap, EventLog, MultiAxisPlot. | Equivalent panels exist; less customizable per-panel. |
+| **rosbridge adapter** | Built-in (`@altara/ros`) with typed factories per `sensor_msgs/*`. | Native ROS support inside Studio. |
+| **MQTT support** | Built-in (`createMqttAdapter`). | Available via plugins / Foxglove agent. |
+| **High-frequency streams** | Web Worker pipeline keeps the main thread clean at 1 kHz+. | Performant; based on a similar architecture internally. |
+| **Bundle size in your app** | < 30 KB gzip. | N/A — separate application. |
+| **License** | MIT. | Mozilla Public License 2.0 + commercial Foxglove platform. |
+| **Pricing model** | Free open-source core; Pro tier (3D + MCAP) coming. | Free Studio; paid cloud / enterprise tiers. |
+
+## Stack them together
+
+Use Foxglove for the engineering team's day-to-day debugging and log review. Use Altara when you need that visibility surfaced inside the operator-facing product — the two complement each other rather than compete.
+
+## Roadmap
+
+The biggest gaps today vs. Foxglove are 3D URDF rendering and MCAP playback. Both are on the Pro-tier roadmap (`@altara/three` and `@altara/mcap`). For projects that need them right now, use Foxglove — switching to Altara later is just an `npm install` away.

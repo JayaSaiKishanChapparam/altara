@@ -1,0 +1,232 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Cookbook/IoT sensor grid" />
+
+# IoT sensor grid
+
+Manufacturing-floor dashboard for twelve sensors over MQTT — a responsive `Gauge` grid for current values, a `TimeSeries` for trend analysis, and an `EventLog` for alerts.
+
+## What we're building
+
+```
+┌──────┬──────┬──────┬──────┐
+│ T1   │ T2   │ T3   │ T4   │  ← temperature gauges
+├──────┼──────┼──────┼──────┤
+│ P1   │ P2   │ P3   │ P4   │  ← pressure gauges
+├──────┼──────┼──────┼──────┤
+│ V1   │ V2   │ V3   │ V4   │  ← vibration gauges
+└──────┴──────┴──────┴──────┘
+┌──────────────────────────────────┐
+│  TimeSeries — trends, all axes   │
+└──────────────────────────────────┘
+┌──────────────────────────────────┐
+│  EventLog — threshold alerts     │
+└──────────────────────────────────┘
+```
+
+## MQTT topic structure
+
+The factory publishes per-line, per-sensor topics:
+
+```
+factory/line1/sensor/temperature  →  { c: 24.1 }
+factory/line1/sensor/pressure     →  { kpa: 110.4 }
+factory/line1/sensor/vibration    →  { rms: 0.07 }
+factory/line2/sensor/temperature  →  …
+…
+```
+
+## Full code
+
+```tsx
+import '@altara/core/styles.css';
+import {
+  AltaraProvider,
+  EventLog,
+  Gauge,
+  TimeSeries,
+  createMqttAdapter,
+} from '@altara/core';
+import type { EventLogEntry } from '@altara/core';
+
+const BROKER = 'ws://broker.local:8083/mqtt';
+
+const lines = [1, 2, 3, 4];
+
+// Build one adapter per (line, sensor) pair.
+const tempSources = lines.map((l) =>
+  createMqttAdapter({
+    url: BROKER,
+    topic: `factory/line${l}/sensor/temperature`,
+    valueExtractor: (m) => (m as { c: number }).c,
+  }),
+);
+
+const pressureSources = lines.map((l) =>
+  createMqttAdapter({
+    url: BROKER,
+    topic: `factory/line${l}/sensor/pressure`,
+    valueExtractor: (m) => (m as { kpa: number }).kpa,
+  }),
+);
+
+const vibrationSources = lines.map((l) =>
+  createMqttAdapter({
+    url: BROKER,
+    topic: `factory/line${l}/sensor/vibration`,
+    valueExtractor: (m) => (m as { rms: number }).rms,
+  }),
+);
+
+// Threshold zones per sensor type — encoded once and reused on every gauge.
+const TEMP_THRESHOLDS = [
+  { value: 0, color: 'var(--vt-color-active)' },
+  { value: 60, color: 'var(--vt-color-warn)' },
+  { value: 80, color: 'var(--vt-color-danger)' },
+];
+
+const PRESSURE_THRESHOLDS = [
+  { value: 0, color: 'var(--vt-color-active)' },
+  { value: 100, color: 'var(--vt-color-warn)' },
+  { value: 130, color: 'var(--vt-color-danger)' },
+];
+
+const VIBRATION_THRESHOLDS = [
+  { value: 0, color: 'var(--vt-color-active)' },
+  { value: 0.05, color: 'var(--vt-color-warn)' },
+  { value: 0.1, color: 'var(--vt-color-danger)' },
+];
+
+// In production, derive these entries from the threshold breaches the
+// adapters report — wire them into a small reducer that pushes one entry
+// per warn/danger transition.
+const events: EventLogEntry[] = [];
+
+export function IoTSensorGrid() {
+  return (
+    <AltaraProvider theme="dark">
+      <div style={{ padding: 16, background: 'var(--vt-bg-base)', display: 'grid', gap: 12 }}>
+        {/* Temperature row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {tempSources.map((src, i) => (
+            <Gauge
+              key={i}
+              dataSource={src}
+              min={0}
+              max={100}
+              label={`T${i + 1}`}
+              unit="°C"
+              size="sm"
+              thresholds={TEMP_THRESHOLDS}
+            />
+          ))}
+        </div>
+
+        {/* Pressure row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {pressureSources.map((src, i) => (
+            <Gauge
+              key={i}
+              dataSource={src}
+              min={0}
+              max={150}
+              label={`P${i + 1}`}
+              unit="kPa"
+              size="sm"
+              thresholds={PRESSURE_THRESHOLDS}
+            />
+          ))}
+        </div>
+
+        {/* Vibration row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          {vibrationSources.map((src, i) => (
+            <Gauge
+              key={i}
+              dataSource={src}
+              min={0}
+              max={0.15}
+              label={`V${i + 1}`}
+              unit="g"
+              size="sm"
+              thresholds={VIBRATION_THRESHOLDS}
+            />
+          ))}
+        </div>
+
+        {/* Multi-channel trend chart */}
+        <TimeSeries
+          mockMode
+          height={220}
+          channels={[
+            { key: 'temp', label: 'Temp avg', unit: '°C', color: '#1D9E75' },
+            { key: 'p', label: 'Pressure avg', unit: 'kPa', color: '#378ADD' },
+            { key: 'vib', label: 'Vibration avg', unit: 'g', color: '#EF9F27' },
+          ]}
+        />
+
+        <div style={{ height: 200 }}>
+          <EventLog entries={events} />
+        </div>
+      </div>
+    </AltaraProvider>
+  );
+}
+```
+
+## Threshold configuration
+
+Each sensor type gets its own threshold band. The pattern is the same in every case:
+
+1. Define the bands once as a constant (`TEMP_THRESHOLDS`, etc.).
+2. Pass them to every `Gauge` of that type.
+3. The gauge auto-sorts thresholds by value and renders each as a colored arc segment from that threshold to the next.
+
+For per-line tuning (e.g. line 3's temperature limits differ), build a mapping object and look up by line index.
+
+## Wiring the EventLog from threshold breaches
+
+Components don't push events into the log directly — that's a layer above. A small reducer that subscribes to each adapter and emits an entry on warn/danger transitions:
+
+```ts
+import { useEffect, useState } from 'react';
+import type { AltaraDataSource, EventLogEntry, TelemetryValue } from '@altara/core';
+
+function useThresholdEvents(
+  sources: { source: AltaraDataSource; label: string; warnAt: number; dangerAt: number }[],
+) {
+  const [entries, setEntries] = useState<EventLogEntry[]>([]);
+
+  useEffect(() => {
+    const lastLevel = new Map<string, 'ok' | 'warn' | 'danger'>();
+    const offs = sources.map(({ source, label, warnAt, dangerAt }) => {
+      return source.subscribe((v: TelemetryValue) => {
+        const level = v.value >= dangerAt ? 'danger' : v.value >= warnAt ? 'warn' : 'ok';
+        if (lastLevel.get(label) === level) return;
+        lastLevel.set(label, level);
+        if (level !== 'ok') {
+          setEntries((prev) => [
+            ...prev.slice(-499),
+            {
+              timestamp: v.timestamp,
+              severity: level === 'danger' ? 'error' : 'warn',
+              message: `${label}: ${v.value.toFixed(1)} crossed ${level} threshold`,
+            },
+          ]);
+        }
+      });
+    });
+    return () => offs.forEach((off) => off());
+  }, [sources]);
+
+  return entries;
+}
+```
+
+Wrap every sensor in one `useThresholdEvents` call and feed the result into `<EventLog entries={…} />`.
+
+## Production notes
+
+- For dozens of sensors at high publish rates, consider downsampling on the broker side (Mosquitto bridge, EMQX rule engine) rather than throttling per-adapter.
+- Use threshold colors that match your existing facility SCADA conventions — sticking to convention helps operators read at a glance.
+- The vibration RMS threshold band above is illustrative; ISO 10816 has the canonical numbers per machine class.

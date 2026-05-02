@@ -1,0 +1,37 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+storybook-static
+*.tsbuildinfo
+
+# Caches
+.turbo
+.cache
+coverage
+
+# Local-only debug artifacts
+.smoketest-screenshots
+.gif-tmp
+
+# Tooling — local-only configs
+.claude
+.vercel
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local

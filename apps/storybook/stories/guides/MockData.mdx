@@ -1,0 +1,130 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as TimeSeriesStories from '../components/TimeSeries.stories';
+
+<Meta title="Guides/Mock data" />
+
+# Mock data
+
+Every component that takes a `dataSource` works without one — pass `mockMode` and you get realistic synthetic data immediately. No hardware, no broker, no ROS2 install. This is the workflow we use ourselves to develop and document.
+
+## The simplest case
+
+```tsx
+import { TimeSeries, Gauge, Attitude } from '@altara/core';
+
+<TimeSeries mockMode height={240} />
+<Gauge mockMode min={0} max={100} label="Battery" unit="%" />
+<Attitude mockMode size={220} />
+```
+
+`mockMode` doesn't replace `dataSource` — if both are set, the data source wins. Use `mockMode` for evaluation, demos, and Storybook stories.
+
+## The four built-in generators
+
+When you need more control than `mockMode`, build a custom `AltaraDataSource` from `createMockDataSource(...)`. It accepts a `MockGenerator` — a function `(timeMs: number) => number`. Four are built in.
+
+### `sineWave(hz, amplitude)`
+
+Smooth sinusoid, centered on zero. Best for IMU axes, vibration, anything that oscillates.
+
+```ts
+import { createMockDataSource, sineWave } from '@altara/core';
+
+const gyroZ = createMockDataSource({
+  generator: sineWave(0.5, 1.5), // 0.5 Hz, ±1.5 rad/s
+  hz: 60,
+});
+```
+
+### `randomWalk(drift, bound, seed)`
+
+Bounded random walk. Each step adds a small random delta and clamps to `[-bound, bound]`. Best for slowly drifting signals — battery state of charge, temperature, signal strength.
+
+```ts
+import { createMockDataSource, randomWalk } from '@altara/core';
+
+const temp = createMockDataSource({
+  generator: randomWalk(0.05, 100, 0.4), // ±5% steps, bounded ±100, start at 40
+  hz: 5,
+});
+```
+
+### `stepFunction(intervalMs, low, high)`
+
+Discrete step changes. Best for state-machine signals — relay state, mode flags, geofence in/out.
+
+```ts
+import { createMockDataSource, stepFunction } from '@altara/core';
+
+const armState = createMockDataSource({
+  generator: stepFunction(2000, 0, 1), // toggles 0/1 every 2 s
+  hz: 1,
+});
+```
+
+### `custom(fn)`
+
+Pass-through wrapper for arbitrary user generators. Use it when none of the above fit.
+
+```ts
+import { createMockDataSource, custom } from '@altara/core';
+
+// Linear ramp from 0 → 100 over a minute, then resets.
+const ramp = custom((t) => (t / 1000) % 60);
+
+const source = createMockDataSource({ generator: ramp, hz: 30 });
+```
+
+## Multi-channel realistic mock
+
+For the most useful demos, route a single `AltaraDataSource` to a multi-channel component. Tag each emitted sample with a `channel` field — components like `TimeSeries`, `MultiAxisPlot`, and `Attitude` route by it.
+
+```ts
+import type { AltaraDataSource, TelemetryValue } from '@altara/core';
+
+function attitudeMockSource(): AltaraDataSource {
+  const subs = new Set<(v: TelemetryValue) => void>();
+  const id = setInterval(() => {
+    const t = performance.now() / 1000;
+    const now = Date.now();
+    for (const cb of subs) {
+      cb({ value: Math.sin(t * 0.8) * 30, timestamp: now, channel: 'roll' });
+      cb({ value: Math.sin(t * 0.5 + 1) * 18, timestamp: now, channel: 'pitch' });
+    }
+  }, 33);
+  return {
+    subscribe(cb) {
+      subs.add(cb);
+      return () => subs.delete(cb);
+    },
+    getHistory: () => [],
+    status: 'connected',
+    destroy() {
+      clearInterval(id);
+      subs.clear();
+    },
+  };
+}
+```
+
+Hand that to `<Attitude dataSource={attitudeMockSource()} />` and you get out-of-phase roll + pitch oscillation routed correctly.
+
+## Try it
+
+The Playground story below uses `mockMode` under the hood — adjust `windowMs`, `bufferSize`, and `fps` from the Controls panel and watch the chart re-render.
+
+<Canvas of={TimeSeriesStories.Playground} />
+
+## When mockMode isn't enough
+
+`mockMode` is great until you need to test specific value sequences — e.g. simulating a battery dropping below 20% to verify the threshold dot turns red. Build a deterministic generator:
+
+```ts
+const drainingBattery = createMockDataSource({
+  generator: (t) => {
+    const minutes = (t - performance.timeOrigin) / 60_000;
+    return Math.max(0, 100 - minutes * 5); // -5% per minute
+  },
+  hz: 5,
+});
+```

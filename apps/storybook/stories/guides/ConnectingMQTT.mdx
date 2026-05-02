@@ -1,0 +1,152 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Connecting MQTT" />
+
+# Connecting MQTT
+
+`@altara/core` ships an MQTT-over-WebSocket adapter for industrial-IoT and home-automation feeds. The `mqtt` npm package is an **optional peer dependency** — install it only if you use this adapter.
+
+> **Prerequisites**
+> - An MQTT broker that exposes the WebSocket transport (e.g. Mosquitto with the `websockets` listener, EMQX, HiveMQ).
+> - `npm install @altara/core mqtt` in your React app.
+
+## Basic connection
+
+`createMqttAdapter` returns an `AltaraDataSource`. Hand it to any component that accepts a `dataSource` prop.
+
+```tsx
+import { AltaraProvider, TimeSeries, createMqttAdapter } from '@altara/core';
+
+const source = createMqttAdapter({
+  url: 'ws://localhost:8083/mqtt',
+  topic: 'factory/line1/sensor/temperature',
+  // payloadFormat: 'json' is the default — JSON.parse'd messages are
+  // passed to valueExtractor.
+  valueExtractor: (msg) => (msg as { c: number }).c,
+});
+
+export function App() {
+  return (
+    <AltaraProvider theme="dark">
+      <TimeSeries dataSource={source} height={240} />
+    </AltaraProvider>
+  );
+}
+```
+
+Under the hood the adapter:
+
+- Dynamically `import('mqtt')` so the dep isn't pulled into apps that don't use MQTT.
+- Subscribes to `topic` on the broker's first `connect` event.
+- Reflects MQTT.js client events (`connect` / `reconnect` / `error` / `close`) onto the standard `ConnectionStatus` lifecycle.
+- Trims the in-memory history at `bufferSize` (default 10 000).
+
+## Payload formats
+
+| `payloadFormat` | Decoded type passed to `valueExtractor` |
+|---|---|
+| `'json'` *(default)* | `JSON.parse(text)` — typically `Record<string, unknown>` |
+| `'string'` | The raw UTF-8 string |
+| `'binary'` | The raw `Uint8Array` |
+
+```ts
+// Plain numeric payload, e.g. "21.4"
+createMqttAdapter({
+  url: 'ws://broker',
+  topic: 'sensors/temp',
+  payloadFormat: 'string',
+  valueExtractor: (text) => Number(text),
+});
+
+// Binary first byte
+createMqttAdapter({
+  url: 'ws://broker',
+  topic: 'sensors/raw',
+  payloadFormat: 'binary',
+  valueExtractor: (bytes) => (bytes as Uint8Array)[0]!,
+});
+```
+
+## Topic structure
+
+A typical industrial topic tree might look like:
+
+```
+factory/
+  line1/
+    sensor/
+      temperature  →  { c: 24.1 }
+      pressure     →  { kpa: 110.4 }
+      vibration    →  { rms: 0.07 }
+  line2/
+    …
+```
+
+Build one adapter per signal:
+
+```tsx
+import { createMqttAdapter, SignalPanel } from '@altara/core';
+
+const url = 'ws://broker.local:8083/mqtt';
+
+const temp = createMqttAdapter({
+  url,
+  topic: 'factory/line1/sensor/temperature',
+  valueExtractor: (m) => (m as { c: number }).c,
+});
+
+const pressure = createMqttAdapter({
+  url,
+  topic: 'factory/line1/sensor/pressure',
+  valueExtractor: (m) => (m as { kpa: number }).kpa,
+});
+
+export function LineOne() {
+  return (
+    <SignalPanel
+      signals={[
+        { key: 'temp', label: 'Temp', unit: '°C', dataSource: temp, warnAt: 60, dangerAt: 80 },
+        { key: 'p', label: 'Pressure', unit: 'kPa', dataSource: pressure },
+      ]}
+    />
+  );
+}
+```
+
+For wildcards (`+` for one segment, `#` for multi-level), pass them through directly:
+
+```ts
+createMqttAdapter({
+  url,
+  topic: 'factory/line1/sensor/+',
+  valueExtractor: (msg, topic) => {
+    // topic is the resolved per-message topic — useful for routing.
+    if (topic.endsWith('/temperature')) return (msg as { c: number }).c;
+    return NaN; // dropped
+  },
+});
+```
+
+## Custom transport
+
+For broker SDKs that aren't `mqtt`, or for tests, pass `connectImpl`:
+
+```ts
+createMqttAdapter({
+  url: 'ws://broker',
+  topic: 'x',
+  valueExtractor: (m) => (m as { v: number }).v,
+  connectImpl: (url) => myCustomMqttClient(url), // returns an MqttClientLike
+});
+```
+
+`MqttClientLike` is a small subset of `mqtt.Client` — `on(event, cb)` for `'connect' | 'message' | 'error' | 'close' | 'reconnect'`, `subscribe(topic)`, `unsubscribe(topic)`, `end(force)`.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `Cannot find module 'mqtt'` at runtime | Peer dep not installed | `npm install mqtt` |
+| Stays `'connecting'` forever | Broker isn't exposing the WebSocket listener, or wrong port | Check broker config; e.g. Mosquitto needs `listener 8083` + `protocol websockets` |
+| Messages arrive but values are `NaN` | `payloadFormat` mismatch | Confirm what the broker is publishing; switch to `'string'` or `'binary'` if it's not JSON |
+| TLS errors in browser | Mixed content (https page → ws broker) | Use `wss://` and a TLS-terminating proxy in front of the broker |

@@ -1,0 +1,74 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. The fastest path to a fix is a minimal reproduction — a Storybook story, CodeSandbox, or StackBlitz beats prose every time.
+
+  - type: input
+    id: altara-version
+    attributes:
+      label: Altara version
+      description: 'Output of `npm ls @altara/core` (and `@altara/ros` if relevant).'
+      placeholder: 'e.g. @altara/core@1.0.0'
+    validations:
+      required: true
+
+  - type: input
+    id: react-version
+    attributes:
+      label: React version
+      placeholder: 'e.g. 18.3.1'
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser / Node version
+      description: Browser + version, or Node + bundler if it's a build-time issue.
+      placeholder: 'e.g. Chrome 124 on macOS, or Node 20.11 + Next.js 14.2'
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: As specific as possible. Numbered steps preferred.
+      placeholder: |
+        1. Render `<TimeSeries dataSource={x} />`
+        2. Trigger ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Console errors, screenshots, or a recording all help.
+    validations:
+      required: true
+
+  - type: input
+    id: sandbox
+    attributes:
+      label: Reproduction link
+      description: 'CodeSandbox / StackBlitz / minimal repo. PRs that fix issues without a repro link are much harder to verify.'
+      placeholder: 'https://codesandbox.io/s/...'
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Workarounds you've tried, related issues, hardware specifics — anything you think helps.

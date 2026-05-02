@@ -1,0 +1,120 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as GaugeStories from '../components/Gauge.stories';
+
+<Meta title="Guides/Theming" />
+
+# Theming
+
+Altara uses CSS custom properties exclusively. No CSS-in-JS, no runtime style cost. One stylesheet imported once at the app root drives every component.
+
+## The provider
+
+`AltaraProvider` sets `data-altara-theme` on `<html>`, which scopes the token block. Use it at the root of your tree.
+
+```tsx
+import '@altara/core/styles.css';
+import { AltaraProvider } from '@altara/core';
+
+<AltaraProvider theme="dark">{/* … */}</AltaraProvider>
+<AltaraProvider theme="light">{/* … */}</AltaraProvider>
+```
+
+The provider itself is light — it just toggles the attribute and exposes `useAltara()` for app code that needs to know the active theme.
+
+## Tokens
+
+The full set of tokens lives in `packages/core/src/tokens/tokens.css`. The two surface palettes are theme-scoped; semantic data colors and typography/spacing are global.
+
+### Surface tokens (theme-scoped)
+
+| Token | Dark | Light |
+|---|---|---|
+| `--vt-bg-base` | `#0E0F10` | `#F5F4F1` |
+| `--vt-bg-panel` | `#181A1B` | `#FFFFFF` |
+| `--vt-bg-elevated` | `#1F2224` | `#FAFAF8` |
+| `--vt-border` | `#2E3133` | `#E2E0D9` |
+| `--vt-text-primary` | `#E8E6DF` | `#1A1A18` |
+| `--vt-text-muted` | `#7A7872` | `#888780` |
+| `--vt-text-label` | `#9A9890` | `#5F5E5A` |
+
+### Semantic data colors (theme-independent)
+
+These encode meaning, not aesthetics — they don't flip in light mode.
+
+| Token | Value | Use |
+|---|---|---|
+| `--vt-color-active` | `#1D9E75` | Healthy / positive |
+| `--vt-color-warn` | `#EF9F27` | Approaching threshold |
+| `--vt-color-danger` | `#E24B4A` | Threshold breached / error |
+| `--vt-color-info` | `#378ADD` | Selected / highlighted |
+| `--vt-color-neutral` | `#888780` | No data / inactive |
+| `--vt-color-stale` | `#5F5E5A` | Data too old |
+
+### Typography & spacing
+
+| Token | Value |
+|---|---|
+| `--vt-font-sans` | `'Inter', system-ui, sans-serif` |
+| `--vt-font-mono` | `'JetBrains Mono', 'Fira Code', monospace` |
+| `--vt-space-1`…`6` | `4 / 8 / 12 / 16 / 24 px` |
+| `--vt-radius-sm`/`md`/`lg` | `4 / 6 / 8 px` |
+
+## Per-component overrides
+
+Pass a `className` to scope an override to a single component:
+
+```tsx
+<TimeSeries className="brand-chart" mockMode />
+
+/* in your stylesheet */
+.brand-chart {
+  --vt-color-info: #6C5CE7;     /* changes the default channel color */
+  --vt-color-warn: #FFB347;     /* threshold-line color */
+  --vt-bg-panel: #0F0F12;       /* chart background */
+}
+```
+
+CSS custom properties cascade by selector specificity, so the parent provider's tokens still apply unless you override them on this element.
+
+## Custom brand theme
+
+For a fully branded experience, override the surface palette globally:
+
+```css
+[data-altara-theme='dark'] {
+  --vt-bg-base:      #0A0F1F;
+  --vt-bg-panel:     #11172D;
+  --vt-bg-elevated:  #1A2240;
+  --vt-border:       #2A3358;
+  --vt-text-primary: #E5E7F0;
+  --vt-text-muted:   #7E85A6;
+  --vt-text-label:   #A4ABCB;
+
+  /* Optional — make the "info" accent your brand color */
+  --vt-color-info:   #6C5CE7;
+}
+```
+
+Drop that stylesheet in *after* `@altara/core/styles.css` and every component picks up the new tokens.
+
+## Canvas-rendered components and `prefers-color-scheme`
+
+Canvas components (`TimeSeries`, `MultiAxisPlot`, `Gauge`, `Attitude`) read tokens via `getComputedStyle` **on every frame** of their `requestAnimationFrame` loop. Theme changes — including ones triggered by the OS-level dark/light switch — propagate without re-rendering and without page reload.
+
+The `Gauge` Default story below picks up whatever theme the toolbar (top-right) is set to:
+
+<Canvas of={GaugeStories.Default} />
+
+Switch the toolbar between Dark and Light to see the surface tokens flow through the gauge background, label, and value text.
+
+## Reduced motion
+
+`tokens.css` honors `prefers-reduced-motion: reduce`:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .vt-signal-row[data-flash='true'] { animation: none !important; }
+}
+```
+
+Decorative animation (the SignalPanel row flash) is disabled when the OS-level setting is on. JavaScript-driven animation — the rAF render loops, mockMode intervals — is **not** disabled, because they drive the actual data display; freezing them would be worse than the motion the user is trying to avoid.

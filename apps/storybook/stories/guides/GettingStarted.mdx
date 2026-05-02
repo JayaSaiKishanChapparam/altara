@@ -1,0 +1,114 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as TimeSeriesStories from '../components/TimeSeries.stories';
+
+<Meta title="Guides/Getting started" />
+
+# Getting started
+
+This guide gets a working Altara dashboard on screen in about five minutes — no robot, no ROS2 server, no real telemetry needed.
+
+## 1. Install
+
+```bash
+# pnpm
+pnpm add @altara/core
+
+# npm
+npm install @altara/core
+
+# yarn
+yarn add @altara/core
+```
+
+If you plan to render `LiveMap`, install the optional Leaflet peer deps as well:
+
+```bash
+pnpm add leaflet react-leaflet
+```
+
+## 2. Import the stylesheet
+
+Altara uses CSS custom properties for theming — no CSS-in-JS, no runtime cost. Import the single stylesheet **once** at your app root:
+
+```tsx
+// app.tsx (or _app.tsx, root.tsx, etc.)
+import '@altara/core/styles.css';
+```
+
+## 3. Render your first component
+
+Wrap your tree in `AltaraProvider` and drop in a `TimeSeries` with `mockMode` — it will start drawing a sine wave immediately.
+
+```tsx
+import '@altara/core/styles.css';
+import { AltaraProvider, TimeSeries } from '@altara/core';
+
+export function App() {
+  return (
+    <AltaraProvider theme="dark">
+      <TimeSeries mockMode height={240} />
+    </AltaraProvider>
+  );
+}
+```
+
+That's it — here's what it looks like running:
+
+<Canvas of={TimeSeriesStories.Default} />
+
+## 4. Connect real data
+
+Most components accept a `dataSource: AltaraDataSource`. The simplest source for prototyping is the built-in mock factory; for real telemetry, use a hook or adapter.
+
+```tsx
+import { AltaraProvider, TimeSeries, useWebSocket } from '@altara/core';
+
+function Live() {
+  const { lastMessage } = useWebSocket('wss://my-broker/imu');
+  // … parse `lastMessage.data` into your AltaraDataSource implementation,
+  // or use a typed adapter (next section).
+  return <TimeSeries mockMode height={240} />;
+}
+```
+
+For ROS2 specifically, install `@altara/ros` and use `createRosbridgeAdapter` — see the [Connecting ROS2 guide](?path=/docs/guides-connecting-ros2--api-reference). For MQTT see [Connecting MQTT](?path=/docs/guides-connecting-mqtt--api-reference).
+
+## 5. Compose more components
+
+Every component follows the same pattern — accept a `dataSource` (or work with `mockMode`) and ride the same `AltaraProvider` theme.
+
+```tsx
+import {
+  AltaraProvider,
+  TimeSeries,
+  Gauge,
+  SignalPanel,
+  createMockDataSource,
+  sineWave,
+} from '@altara/core';
+
+const altSource = createMockDataSource({ generator: sineWave(0.2, 50), hz: 5 });
+const spdSource = createMockDataSource({ generator: sineWave(0.4, 8), hz: 5 });
+
+export function App() {
+  return (
+    <AltaraProvider theme="dark">
+      <TimeSeries mockMode height={200} />
+      <Gauge mockMode min={0} max={100} label="Battery" unit="%" />
+      <SignalPanel
+        signals={[
+          { key: 'alt', label: 'Altitude', unit: 'm', dataSource: altSource },
+          { key: 'spd', label: 'Speed', unit: 'm/s', dataSource: spdSource },
+        ]}
+      />
+    </AltaraProvider>
+  );
+}
+```
+
+## Next steps
+
+- [Connecting ROS2](?path=/docs/guides-connecting-ros2--api-reference) — typed adapters for `sensor_msgs/*`, throttling, timestamp normalization
+- [Theming](?path=/docs/guides-theming--api-reference) — token list, custom brand colors, dark/light/auto
+- [Performance](?path=/docs/guides-performance--api-reference) — RingBuffer, fps tuning, the Web Worker pipeline for ≥500 Hz feeds
+- [Cookbook → Drone dashboard](?path=/docs/cookbook-drone-dashboard--api-reference) — a complete 6-component layout you can copy-paste

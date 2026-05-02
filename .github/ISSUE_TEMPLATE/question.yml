@@ -1,0 +1,41 @@
+name: Question
+description: Help understanding how to use Altara
+labels: ['question']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before opening a question issue, check whether [Storybook](https://storybook.altara.dev) covers it — most "how do I" questions are answered in **Guides** or **Cookbook**. If you'd rather chat through it interactively, [GitHub Discussions](../../discussions) is a better venue.
+
+  - type: textarea
+    id: trying-to-build
+    attributes:
+      label: What are you trying to build
+      description: Short description of the app or screen you're working on.
+      placeholder: 'e.g. A telemetry view for a small underwater ROV that subscribes to a single MQTT topic.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried
+      description: Code snippets or links to your repro. Even a non-working sketch is useful.
+      render: tsx
+    validations:
+      required: true
+
+  - type: input
+    id: relevant-page
+    attributes:
+      label: Relevant Storybook page
+      description: Which Guide / Cookbook / Component page were you looking at? Paste the URL.
+      placeholder: 'https://storybook.altara.dev/?path=/docs/guides-connecting-ros2--api-reference'
+
+  - type: textarea
+    id: blocker
+    attributes:
+      label: Where you got stuck
+      description: The exact symptom — what happened, what you expected, what changed when you tried X.
+    validations:
+      required: true

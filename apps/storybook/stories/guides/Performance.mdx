@@ -1,0 +1,120 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Guides/Performance" />
+
+# Performance
+
+This page is the engineering-credibility document. The choices below are the difference between a chart that ticks at 60 Hz and one that drops a frame every time a sample arrives.
+
+## Why Canvas, not SVG
+
+SVG-based charts re-render the chart's entire React subtree on every value update. At 100 Hz+, even a modest reconciler pass costs more than the 16 ms frame budget — you see it as visible jank, dropped frames, and layout thrash on adjacent UI.
+
+Altara's `TimeSeries`, `MultiAxisPlot`, `Gauge`, and `Attitude` write directly to a Canvas via `requestAnimationFrame`. The hot path runs **outside** React entirely:
+
+```
+sample arrives  →  push into RingBuffer (no setState)  →  next rAF tick reads buffer + paints
+```
+
+React state is reserved for UI concerns: connection status, channel config, themes. The hot path stays untouched.
+
+## RingBuffer — bounded memory, fast reads
+
+Plain JS arrays grow unbounded. Push `[]`-into-`.push(x)` at 1 kHz and within minutes you've allocated tens of megabytes of garbage.
+
+Altara stores telemetry in a `RingBuffer`:
+
+- Backed by `Float64Array` (typed array, no boxing, contiguous memory).
+- Fixed capacity — overwrites oldest sample once full.
+- `getValues()` / `getTimes()` return ordered slices in O(capacity).
+
+You never have to construct one yourself for the built-in components, but if you build a custom visualization on top of `useTelemetry`, the buffer is exposed:
+
+```tsx
+import { useTelemetry } from '@altara/core';
+
+function CustomChart({ source }) {
+  const { buffer } = useTelemetry(source, 10_000);
+  // buffer.getValues() / buffer.getTimes() inside your rAF loop
+}
+```
+
+## `windowMs` vs `bufferSize`
+
+Two knobs that look related but do different jobs:
+
+- **`windowMs`** — the visible time window. Only samples newer than `now - windowMs` are rendered.
+- **`bufferSize`** — the per-channel ring-buffer capacity (samples). Older samples beyond this drop.
+
+Sensible defaults by scenario:
+
+| Scenario | `fps` | rate | `windowMs` | `bufferSize` |
+|---|---|---|---|---|
+| IMU summary view | 60 | 100 Hz | 30_000 (30 s) | 5_000 |
+| Battery / temp dashboard | 30 | 1 Hz | 600_000 (10 min) | 1_000 |
+| 1 kHz vibration analyzer | 60 | 1000 Hz | 5_000 (5 s) | 10_000 |
+| 24-hour facility monitor | 15 | 0.1 Hz | 86_400_000 | 50_000 |
+
+Pick `bufferSize ≥ rate × windowMs / 1000` so you have at least the visible window's worth of data.
+
+## High-frequency feeds: the Web Worker pipeline
+
+Above ~500 Hz, even decoding the WebSocket frames on the main thread starts to nibble at the frame budget. `createWorkerDataSource` moves the entire ingest path off-thread:
+
+```ts
+import { createWorkerDataSource } from '@altara/core';
+
+const source = createWorkerDataSource({
+  url: 'ws://localhost:9090',
+  subscribeMessage: { op: 'subscribe', topic: '/imu', type: 'sensor_msgs/Imu' },
+  flushHz: 60,
+  // Functions can't be cloned across worker boundaries, so the extractor
+  // is a source string evaluated inside the worker.
+  extractorSource: 'function (msg) { return msg.angular_velocity.z; }',
+});
+```
+
+The worker:
+
+1. Owns the WebSocket. Decoding, parsing, and the `valueExtractor` all run off the main thread.
+2. Batches incoming samples in memory.
+3. Posts batches to the main thread at `flushHz` (default 60), independent of the inbound rate.
+
+Net effect: the main thread only sees ~60 messages per second regardless of whether the source is publishing at 100 Hz or 10 kHz.
+
+## FPS tuning
+
+`fps` defaults to 60. Drop it when:
+
+- You're rendering **many** charts at once (4+) — each `TimeSeries` runs its own rAF loop.
+- You're targeting battery-constrained mobile.
+- Your data updates more slowly than the frame rate (a 1 Hz battery feed at 60 fps is 59 wasted draws).
+
+```tsx
+<TimeSeries fps={30} mockMode height={180} />
+```
+
+15 fps is usable for very slow signals; below that the chart starts to feel laggy.
+
+## Canvas DPI
+
+Canvas defaults to 1 device pixel = 1 logical pixel — on retina displays that means everything is rendered at half the screen's native resolution and looks blurry. Altara's canvas components multiply the backing store by `window.devicePixelRatio` and scale the context to match. Nothing for you to configure.
+
+## Memory profiling
+
+To verify there's no leak:
+
+1. Open Chrome DevTools → Performance tab.
+2. Click ⏺ Record. Let your app run for 5–10 minutes with live data.
+3. Stop. Look at the **JS Heap** track:
+   - Healthy: sawtooth pattern (allocations + periodic GC) with no upward drift.
+   - Leak: monotonic growth over time.
+
+If you see growth, take heap snapshots at the start and end (DevTools → Memory tab → "Heap snapshot"), then **Comparison** view between them — the dominant retained objects are usually array buffers from data sources that weren't `destroy()`'d.
+
+## Common pitfalls
+
+- **`setState` in a high-frequency callback.** Subscribe to a data source via `useTelemetry` (which writes to a buffer) — don't call `setState` per sample.
+- **Unbounded arrays.** If you build your own `AltaraDataSource`, cap its history with a fixed-size buffer or splice.
+- **Forgetting `destroy()`.** Mock and adapter sources hold timers and sockets — call `destroy()` in your cleanup so they don't outlive the component.
+- **`bufferSize` smaller than the visible window.** Samples drop out of the buffer before the chart's done with them — you see a clipped trace.

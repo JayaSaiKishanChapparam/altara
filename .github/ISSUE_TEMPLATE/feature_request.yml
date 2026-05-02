@@ -1,0 +1,69 @@
+name: Feature request
+description: Propose a new component, prop, or capability
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New components and prop additions land much faster when the request includes a concrete API sketch and a real use case. "Make `TimeSeries` better" is harder to act on than "I need annotations on the time axis to mark events; here's the API I'd like."
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component / area does this affect?
+      options:
+        - TimeSeries
+        - Gauge
+        - Attitude
+        - SignalPanel
+        - LiveMap
+        - EventLog
+        - ConnectionBar
+        - MultiAxisPlot
+        - DashboardLayout
+        - Hooks (useWebSocket, useTelemetry, useRingBuffer)
+        - Adapters (rosbridge, MQTT, worker)
+        - Theming / tokens
+        - New component
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do? What does the current API force you to do instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: api
+    attributes:
+      label: Proposed API
+      description: 'A sketch of the API you have in mind. Code blocks welcome.'
+      render: tsx
+      placeholder: |
+        <TimeSeries
+          mockMode
+          annotations={[
+            { time: 1700000000000, color: 'var(--vt-color-warn)', label: 'Lift-off' },
+          ]}
+        />
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: 'Concrete: what app are you building, what does it do today, what would change with this feature?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds or other libraries you tried, and why they didn't fit.

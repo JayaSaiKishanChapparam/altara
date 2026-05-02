@@ -1,0 +1,38 @@
+{
+  "name": "@altara/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Altara — interactive component documentation",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o storybook-static",
+    "build": "storybook build -o storybook-static",
+    "lint": "echo 'no lint configured'"
+  },
+  "dependencies": {
+    "@altara/core": "workspace:*",
+    "@altara/ros": "workspace:*",
+    "leaflet": "^1.9.4",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-grid-layout": "^1.4.4",
+    "react-leaflet": "^4.2.1",
+    "react-resizable": "^3.0.5"
+  },
+  "devDependencies": {
+    "@joshwooding/vite-plugin-react-docgen-typescript": "^0.5.0",
+    "@storybook/addon-essentials": "^8.0.8",
+    "@storybook/addon-themes": "^8.0.8",
+    "@storybook/blocks": "^8.0.8",
+    "@storybook/manager-api": "^8.0.8",
+    "@storybook/react": "^8.0.8",
+    "@storybook/react-vite": "^8.0.8",
+    "@storybook/theming": "^8.0.8",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "storybook": "^8.0.8",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.10"
+  }
+}

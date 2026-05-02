@@ -1,0 +1,156 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Cookbook/Robot arm monitor" />
+
+# Robot arm monitor
+
+Live joint-state, end-effector trajectory, and event monitoring for a six-DOF robotic arm. Six gauges (one per joint), a `TimeSeries` for the end-effector tip, a `SignalPanel` for force/torque, and an `EventLog` for motion events.
+
+## What we're building
+
+```
+┌──────┬──────┬──────┬──────┬──────┬──────┐
+│  J1  │  J2  │  J3  │  J4  │  J5  │  J6  │  ← joint angle gauges
+└──────┴──────┴──────┴──────┴──────┴──────┘
+┌────────────────────────┬─────────────────┐
+│  TimeSeries (tip Z)    │  SignalPanel    │
+│                        │  (Fx Fy Fz)     │
+└────────────────────────┴─────────────────┘
+┌──────────────────────────────────────────┐
+│  EventLog — motion start/stop, faults    │
+└──────────────────────────────────────────┘
+```
+
+## Full code (mockMode)
+
+```tsx
+import '@altara/core/styles.css';
+import {
+  AltaraProvider,
+  EventLog,
+  Gauge,
+  SignalPanel,
+  TimeSeries,
+  createMockDataSource,
+  randomWalk,
+  sineWave,
+  stepFunction,
+} from '@altara/core';
+import type { EventLogEntry } from '@altara/core';
+
+// Joint angles range −180° → +180°. Each joint moves at a different
+// frequency and amplitude — `stepFunction` for J1 simulates a discrete
+// pick-and-place pattern; the others sweep smoothly.
+const jointSources = [
+  createMockDataSource({ generator: stepFunction(3000, -45, 90), hz: 5 }),
+  createMockDataSource({ generator: sineWave(0.1, 90), hz: 5 }),
+  createMockDataSource({ generator: sineWave(0.15, 60), hz: 5 }),
+  createMockDataSource({ generator: sineWave(0.2, 120), hz: 5 }),
+  createMockDataSource({ generator: sineWave(0.25, 150), hz: 5 }),
+  createMockDataSource({ generator: sineWave(0.3, 180), hz: 5 }),
+];
+
+// Force/torque on the wrist sensor.
+const fxSource = createMockDataSource({ generator: randomWalk(0.05, 50, 0.5), hz: 10 });
+const fySource = createMockDataSource({ generator: randomWalk(0.05, 50, 0.5), hz: 10 });
+const fzSource = createMockDataSource({ generator: randomWalk(0.05, 80, 0.6), hz: 10 });
+
+const now = Date.now();
+const events: EventLogEntry[] = [
+  { timestamp: now - 9000, severity: 'info', message: 'Arm calibration complete' },
+  { timestamp: now - 7000, severity: 'info', message: 'Motion plan accepted (move_l)' },
+  { timestamp: now - 5500, severity: 'warn', message: 'Joint J3 approaching soft limit' },
+  { timestamp: now - 4000, severity: 'info', message: 'Trajectory complete' },
+  { timestamp: now - 2000, severity: 'error', message: 'Force-torque overshoot — pause requested' },
+  { timestamp: now - 1000, severity: 'info', message: 'Resuming on operator confirmation' },
+];
+
+export function RobotArmMonitor() {
+  return (
+    <AltaraProvider theme="dark">
+      <div style={{ padding: 16, background: 'var(--vt-bg-base)', display: 'grid', gap: 12 }}>
+        {/* Six joint gauges in a row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
+          {jointSources.map((src, i) => (
+            <Gauge
+              key={i}
+              dataSource={src}
+              min={-180}
+              max={180}
+              label={`J${i + 1}`}
+              unit="°"
+              size="sm"
+            />
+          ))}
+        </div>
+
+        {/* Trajectory + force-torque side by side */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
+          <TimeSeries
+            mockMode
+            height={220}
+            channels={[{ key: 'tipZ', label: 'Tip Z', unit: 'mm', color: '#378ADD' }]}
+            thresholds={[{ value: 50, color: 'var(--vt-color-warn)' }]}
+          />
+          <SignalPanel
+            signals={[
+              { key: 'fx', label: 'Fx', unit: 'N', dataSource: fxSource, warnAt: 30, dangerAt: 45 },
+              { key: 'fy', label: 'Fy', unit: 'N', dataSource: fySource, warnAt: 30, dangerAt: 45 },
+              { key: 'fz', label: 'Fz', unit: 'N', dataSource: fzSource, warnAt: 60, dangerAt: 75 },
+            ]}
+          />
+        </div>
+
+        {/* Motion event log */}
+        <div style={{ height: 200 }}>
+          <EventLog entries={events} />
+        </div>
+      </div>
+    </AltaraProvider>
+  );
+}
+```
+
+## Wiring to ROS2
+
+The standard topics for a 6-DOF arm:
+
+| Component | Topic | Message type | Extractor |
+|---|---|---|---|
+| Joint gauge `J1`…`J6` | `/joint_states` | `sensor_msgs/JointState` | `(m) => m.position[i] * (180 / Math.PI)` (radians → degrees) |
+| `TimeSeries` (tip Z) | `/end_effector_pose` | `geometry_msgs/PoseStamped` | `(m) => m.pose.position.z * 1000` (m → mm) |
+| `SignalPanel` Fx/Fy/Fz | `/wrench` | `geometry_msgs/WrenchStamped` | `(m) => m.wrench.force.x` (etc.) |
+| `EventLog` | `/motion_events` | custom | parse and convert to `EventLogEntry[]` |
+
+`/joint_states` is a single topic publishing a vector — consume it once and route per-joint by index. The simplest pattern:
+
+```ts
+import { createRosbridgeAdapter } from '@altara/ros';
+import type { AltaraDataSource } from '@altara/core';
+
+function jointStateAxis(index: number): AltaraDataSource {
+  return createRosbridgeAdapter({
+    url: 'ws://localhost:9090',
+    topic: '/joint_states',
+    messageType: 'sensor_msgs/JointState',
+    valueExtractor: (m) =>
+      ((m as { position: number[] }).position[index] ?? NaN) * (180 / Math.PI),
+  });
+}
+
+const j1 = jointStateAxis(0);
+const j2 = jointStateAxis(1);
+// …etc
+```
+
+## Mocking joint motion realistically
+
+`stepFunction` is the right pick for J1 because pick-and-place programs alternate between two configurations. For continuous-path joints use `sineWave` with different frequencies and amplitudes per joint — the offset frequencies prevent the gauges from looking like they're synchronized.
+
+For programs you can step through frame-by-frame (e.g. recorded trajectories), build a `custom` generator that interpolates a known `(t, value)` table.
+
+## Production notes
+
+- Joint gauges use `size="sm"` (120 px). For wide displays bump to `"md"`; the layout is just a CSS grid.
+- The force-torque thresholds in `SignalPanel` are tuned to the wrist-sensor calibration — adjust per arm.
+- For 1 kHz force-torque streams, use `createWorkerDataSource` to keep the `SignalPanel` flash animation buttery.
