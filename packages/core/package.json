@@ -1,6 +1,6 @@
 {
   "name": "@altara/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "React components for real-time telemetry dashboards — built for robotics, aerospace, and industrial IoT.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",
@@ -42,8 +42,14 @@
     },
     "./styles.css": "./dist/tokens.css"
   },
-  "files": ["dist", "README.md", "LICENSE"],
-  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "tsup && cp src/tokens/tokens.css dist/tokens.css",
     "dev": "tsup --watch",
@@ -56,10 +62,18 @@
     "react-dom": ">=18.0.0"
   },
   "peerDependenciesMeta": {
-    "leaflet": { "optional": true },
-    "react-leaflet": { "optional": true },
-    "react-grid-layout": { "optional": true },
-    "three": { "optional": true }
+    "leaflet": {
+      "optional": true
+    },
+    "react-leaflet": {
+      "optional": true
+    },
+    "react-grid-layout": {
+      "optional": true
+    },
+    "three": {
+      "optional": true
+    }
   },
   "dependencies": {
     "zustand": "^4.5.0"
