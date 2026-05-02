@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Before opening a question issue, check whether [Storybook](https://storybook.altara.dev) covers it — most "how do I" questions are answered in **Guides** or **Cookbook**. If you'd rather chat through it interactively, [GitHub Discussions](../../discussions) is a better venue.
+        Before opening a question issue, check whether the local Storybook covers it — most "how do I" questions are answered in **Guides** or **Cookbook**. Clone the repo and run `pnpm install && pnpm --filter @altara/storybook storybook`. If you'd rather chat through it interactively, [GitHub Discussions](../../discussions) is a better venue.
 
   - type: textarea
     id: trying-to-build
@@ -29,8 +29,8 @@ body:
     id: relevant-page
     attributes:
       label: Relevant Storybook page
-      description: Which Guide / Cookbook / Component page were you looking at? Paste the URL.
-      placeholder: 'https://storybook.altara.dev/?path=/docs/guides-connecting-ros2--api-reference'
+      description: Which Guide / Cookbook / Component page were you looking at? Paste the local URL or the sidebar path (e.g. "Guides / Connecting ROS2").
+      placeholder: 'Guides / Connecting ROS2'
 
   - type: textarea
     id: blocker

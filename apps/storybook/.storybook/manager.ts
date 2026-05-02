@@ -5,8 +5,8 @@ addons.setConfig({
   theme: create({
     base: 'dark',
     brandTitle: 'Altara',
-    brandUrl: 'https://altara.dev',
-    brandTarget: '_self',
+    brandUrl: 'https://github.com/JayaSaiKishanChapparam/altara',
+    brandTarget: '_blank',
     colorPrimary: '#1D9E75',
     colorSecondary: '#378ADD',
     appBg: '#0E0F10',

@@ -58,12 +58,25 @@ Plus `MultiAxisPlot` (dual-Y-axis chart), `DashboardLayout` (`react-grid-layout`
 | Bundle size | <30KB gz | Standalone app | Standalone app | ~80KB gz |
 | License | MIT | AGPL | Proprietary | MIT |
 
+## Documentation
+
+Interactive component demos, written guides, and the cookbook live in Storybook. Run it locally:
+
+```bash
+git clone https://github.com/JayaSaiKishanChapparam/altara.git
+cd altara
+pnpm install
+pnpm --filter @altara/storybook storybook
+# → http://localhost:6006
+```
+
+You'll find a landing page, a six-part **Guides** section (Getting started, Connecting ROS2, Connecting MQTT, Mock data, Theming, Performance), three full **Cookbook** dashboards, two honest **Comparisons** vs. Grafana / Foxglove, and an interactive playground for every component.
+
 ## Links
 
-- **[Storybook](https://storybook.altara.dev)** — interactive component demos and full API reference
 - **[npm](https://npmjs.com/package/@altara/core)** — `@altara/core` and `@altara/ros`
 - **[GitHub Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)** — questions, ideas, what-are-you-building threads
-- **[Connecting ROS2 guide](https://storybook.altara.dev/?path=/docs/guides-connecting-ros2--api-reference)** — typed adapters, troubleshooting
+- **[CONTRIBUTING](./CONTRIBUTING.md)** — dev setup, PR checklist, story / guide patterns
 
 ## License
 

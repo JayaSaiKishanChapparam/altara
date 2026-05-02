@@ -33,7 +33,7 @@ packages/
   ros/         # @altara/ros — rosbridge adapter + typed factories for common ROS msg types
   mqtt/        # @altara/mqtt — placeholder for the MQTT-specific extras package
 apps/
-  storybook/   # @altara/storybook — interactive docs (storybook.altara.dev)
+  storybook/   # @altara/storybook — interactive docs (run locally with `pnpm --filter @altara/storybook storybook`)
   demo/        # Vite demo app
 docker/
   ros2/        # rosbridge dev environment
