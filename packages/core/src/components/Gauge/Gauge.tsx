@@ -75,7 +75,10 @@ export function Gauge({
   // Real data source subscription.
   useEffect(() => {
     if (!dataSource) return;
-    const last = dataSource.getHistory().at(-1);
+    // Length-based access (not Array.prototype.at, which is ES2022) so the
+    // build matches the ES2020 target in tsconfig.base.json.
+    const history = dataSource.getHistory();
+    const last = history.length > 0 ? history[history.length - 1] : undefined;
     if (last) {
       setValue(last.value);
       setHasValue(true);
