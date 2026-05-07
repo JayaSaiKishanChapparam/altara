@@ -1,6 +1,6 @@
 {
   "name": "@altara/mqtt",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "MQTT-over-WebSocket adapter for Altara — typed factory for piping MQTT broker topics into Altara components.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",
