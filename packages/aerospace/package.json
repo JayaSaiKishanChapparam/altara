@@ -1,0 +1,72 @@
+{
+  "name": "@altara/aerospace",
+  "version": "0.0.1",
+  "description": "Flight-instrument React components for Altara — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, and more.",
+  "license": "MIT",
+  "author": "Jaya Sai Kishan Chapparam",
+  "homepage": "https://github.com/JayaSaiKishanChapparam/altara/tree/main/packages/aerospace#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayaSaiKishanChapparam/altara.git",
+    "directory": "packages/aerospace"
+  },
+  "bugs": {
+    "url": "https://github.com/JayaSaiKishanChapparam/altara/issues"
+  },
+  "keywords": [
+    "react",
+    "aerospace",
+    "aviation",
+    "flight-instruments",
+    "pfd",
+    "hsi",
+    "altimeter",
+    "airspeed",
+    "tcas",
+    "drone",
+    "uav",
+    "evtol",
+    "ground-station",
+    "telemetry",
+    "altara"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@altara/core": "workspace:*",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@altara/core": "workspace:*",
+    "@testing-library/react": "^15.0.5",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "happy-dom": "^14.7.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  }
+}

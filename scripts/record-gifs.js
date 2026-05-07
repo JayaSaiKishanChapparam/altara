@@ -26,14 +26,30 @@ const OUT = path.join(__dirname, '../apps/storybook/public/gifs');
 const TMP = path.join(__dirname, '../.gif-tmp');
 
 // Stories to record. IDs match the entries in Storybook's /index.json.
-const STORIES = [
+//
+// Set STORY_FILTER=<substring> to record only entries whose `name` contains
+// it (case-insensitive). Useful when adding new stories — avoids
+// re-recording the entire set.
+const ALL_STORIES = [
   { id: 'dashboard--hero', name: 'hero', w: 1200, h: 700, ms: 12_000 },
   { id: 'components-timeseries--multi-channel', name: 'time-series', w: 800, h: 300, ms: 8000 },
   { id: 'components-gauge--sizes', name: 'gauge', w: 500, h: 300, ms: 6000 },
   { id: 'components-attitude--combined-motion', name: 'attitude', w: 400, h: 400, ms: 8000 },
   { id: 'components-signalpanel--default', name: 'signal-panel', w: 500, h: 400, ms: 6000 },
   { id: 'components-livemap--default', name: 'live-map', w: 700, h: 400, ms: 10_000 },
+  // ── @altara/aerospace ───────────────────────────────────────────────
+  { id: 'aerospace-primaryflightdisplay--default', name: 'aerospace-pfd', w: 520, h: 390, ms: 8000 },
+  { id: 'aerospace-primaryflightdisplay--with-flight-director', name: 'aerospace-pfd-fd', w: 680, h: 510, ms: 8000 },
+  { id: 'aerospace-horizontalsituationindicator--default', name: 'aerospace-hsi', w: 280, h: 280, ms: 8000 },
+  { id: 'aerospace-airspeedindicator--default', name: 'aerospace-asi', w: 180, h: 180, ms: 6000 },
+  { id: 'aerospace-terrainawareness--default', name: 'aerospace-taws', w: 360, h: 240, ms: 8000 },
+  { id: 'aerospace-tcasdisplay--default', name: 'aerospace-tcas', w: 320, h: 320, ms: 8000 },
 ];
+
+const STORY_FILTER = (process.env.STORY_FILTER || '').toLowerCase();
+const STORIES = STORY_FILTER
+  ? ALL_STORIES.filter((s) => s.name.toLowerCase().includes(STORY_FILTER))
+  : ALL_STORIES;
 
 function which(bin) {
   try {

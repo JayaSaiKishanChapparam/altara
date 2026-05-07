@@ -10,6 +10,7 @@
     "lint": "echo 'no lint configured'"
   },
   "dependencies": {
+    "@altara/aerospace": "workspace:*",
     "@altara/core": "workspace:*",
     "@altara/ros": "workspace:*",
     "leaflet": "^1.9.4",

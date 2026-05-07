@@ -8,6 +8,7 @@
     ".storybook/**/*",
     "stories/**/*",
     "../../packages/core/src/**/*",
-    "../../packages/ros/src/**/*"
+    "../../packages/ros/src/**/*",
+    "../../packages/aerospace/src/**/*"
   ]
 }
