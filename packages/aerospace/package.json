@@ -1,6 +1,6 @@
 {
   "name": "@altara/aerospace",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Flight-instrument React components for Altara — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, and more.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",
