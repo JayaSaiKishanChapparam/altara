@@ -31,7 +31,8 @@ pnpm --filter @altara/storybook storybook
 packages/
   core/        # @altara/core — components, hooks, MQTT/mock adapters, design tokens
   ros/         # @altara/ros — rosbridge adapter + typed factories for common ROS msg types
-  mqtt/        # @altara/mqtt — placeholder for the MQTT-specific extras package
+  aerospace/   # @altara/aerospace — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter
+  mqtt/        # @altara/mqtt — MQTT-over-WebSocket adapter (re-export of core's createMqttAdapter)
 apps/
   storybook/   # @altara/storybook — interactive docs (run locally with `pnpm --filter @altara/storybook storybook`)
   demo/        # Vite demo app
