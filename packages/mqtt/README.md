@@ -1,6 +1,11 @@
 # @altara/mqtt
 
-**MQTT-over-WebSocket adapter for Altara.** Subscribe to an MQTT broker topic from React in one line and pipe live samples into any [`@altara/core`](https://www.npmjs.com/package/@altara/core) component.
+**MQTT-over-WebSocket adapter for Altara.** Subscribe to an MQTT broker topic from React in one line and pipe live samples (sensor values, IoT state, telemetry) into any [`@altara/core`](https://www.npmjs.com/package/@altara/core) component. Built for industrial-IoT dashboards, smart-building monitors, and home-automation HMIs.
+
+[![npm version](https://img.shields.io/npm/v/@altara/mqtt?color=A06CD5&label=npm)](https://www.npmjs.com/package/@altara/mqtt)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/mqtt?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/mqtt)
+[![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/mqtt)
+[![license](https://img.shields.io/npm/l/@altara/mqtt?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
 
 ## Install
 
@@ -43,6 +48,34 @@ The implementation lives in `@altara/core` and is also exported from there. `@al
 
 If you already depend on `@altara/core`, you can `import { createMqttAdapter } from '@altara/core'` directly with no behavioral difference.
 
+## Documentation
+
+The full **Connecting MQTT** guide — broker setup, topic-wildcard routing, JSON vs binary payload handling, throttling, reconnection — lives in the project Storybook. Run it locally:
+
+```bash
+git clone https://github.com/JayaSaiKishanChapparam/altara.git
+cd altara
+pnpm install
+pnpm --filter @altara/storybook storybook
+```
+
+Then open **Guides → Connecting MQTT**.
+
+## Sibling packages
+
+| Package | What it does |
+| --- | --- |
+| [`@altara/core`](https://www.npmjs.com/package/@altara/core) | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
+| [`@altara/aerospace`](https://www.npmjs.com/package/@altara/aerospace) | Flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
+| [`@altara/ros`](https://www.npmjs.com/package/@altara/ros) | ROS2 / rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
+
+## Links
+
+- [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
+- [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
+- [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
+- [`mqtt` package](https://www.npmjs.com/package/mqtt) — the browser/Node MQTT client used under the hood
+
 ## License
 
-MIT
+MIT — see [LICENSE](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE).

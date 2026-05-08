@@ -1,6 +1,11 @@
 # @altara/ros
 
-**ROS2 rosbridge adapter for Altara.** Subscribe to a ROS2 topic from React in one line and pipe live samples into any [`@altara/core`](https://www.npmjs.com/package/@altara/core) component.
+**ROS2 rosbridge adapter for Altara.** Subscribe to a ROS2 topic from React in one line and pipe live samples (IMU, GPS, battery, range, temperature, ...) into any [`@altara/core`](https://www.npmjs.com/package/@altara/core) component. Built for robotics dashboards, drone ground stations, and rover monitoring UIs.
+
+[![npm version](https://img.shields.io/npm/v/@altara/ros?color=EF9F27&label=npm)](https://www.npmjs.com/package/@altara/ros)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/ros?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/ros)
+[![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/ros)
+[![license](https://img.shields.io/npm/l/@altara/ros?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
 
 ## Install
 
@@ -53,7 +58,7 @@ export function App() {
 For common ROS message types, skip the `messageType` + `valueExtractor` boilerplate:
 
 | Factory | Message type | Extracted value |
-|---|---|---|
+| --- | --- | --- |
 | `createBatteryStateAdapter` | `sensor_msgs/BatteryState` | `percentage * 100` |
 | `createRangeAdapter` | `sensor_msgs/Range` | `range` (m) |
 | `createTemperatureAdapter` | `sensor_msgs/Temperature` | `temperature` (°C) |
@@ -84,12 +89,21 @@ pnpm --filter @altara/storybook storybook
 
 Then open **Guides → Connecting ROS2**.
 
+## Sibling packages
+
+| Package | What it does |
+| --- | --- |
+| [`@altara/core`](https://www.npmjs.com/package/@altara/core) | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
+| [`@altara/aerospace`](https://www.npmjs.com/package/@altara/aerospace) | Flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
+| [`@altara/mqtt`](https://www.npmjs.com/package/@altara/mqtt) | MQTT-over-WebSocket adapter for IoT brokers. |
+
 ## Links
 
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
-- [`@altara/core`](https://www.npmjs.com/package/@altara/core) — components, hooks, design tokens
+- [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
+- [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
 - [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite) — the WebSocket server you're connecting to
 
 ## License
 
-MIT
+MIT — see [LICENSE](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE).

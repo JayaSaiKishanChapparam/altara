@@ -1,6 +1,11 @@
 # @altara/aerospace
 
-**Flight-instrument React components for Altara.** Embeddable Primary Flight Display, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, and radio altimeter — built for drone ground stations, eVTOL monitoring, UAV simulators, and aerospace research.
+**Flight-instrument React components for Altara.** Embeddable Primary Flight Display (PFD), Horizontal Situation Indicator (HSI), altimeter, airspeed indicator, vertical speed indicator (VSI), engine instrument cluster, TCAS traffic display, terrain-awareness display (TAWS), autopilot mode annunciator, fuel gauge, and radio altimeter — for drone ground stations, eVTOL monitoring, UAV simulators, aviation dashboards, and aerospace research.
+
+[![npm version](https://img.shields.io/npm/v/@altara/aerospace?color=378ADD&label=npm)](https://www.npmjs.com/package/@altara/aerospace)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/aerospace?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/aerospace)
+[![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/aerospace)
+[![license](https://img.shields.io/npm/l/@altara/aerospace?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
 
 ![Primary Flight Display with flight director](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-pfd-fd.gif)
 
@@ -84,6 +89,35 @@ export function App() {
 
 Every component accepts an `AltaraDataSource` from `@altara/core`. The PFD/HSI route by `TelemetryValue.channel` (`roll`, `pitch`, `heading`, `airspeed`, `altitude`, `vs`, etc.). Single-value components (`Altimeter`, `AirspeedIndicator`, `VerticalSpeedIndicator`, `RadioAltimeter`) take any data source directly.
 
+Pair with [`@altara/ros`](https://www.npmjs.com/package/@altara/ros) to wire a PFD to a `sensor_msgs/Imu` topic, or with [`@altara/mqtt`](https://www.npmjs.com/package/@altara/mqtt) for broker-published telemetry.
+
+## Documentation
+
+The full component playground — Default + Playground stories per component, props in the Controls panel, dark/light theme toggle — lives in the project Storybook. Run it locally:
+
+```bash
+git clone https://github.com/JayaSaiKishanChapparam/altara.git
+cd altara
+pnpm install
+pnpm --filter @altara/storybook storybook
+```
+
+Then open the **Aerospace/** section.
+
+## Sibling packages
+
+| Package | What it does |
+| --- | --- |
+| [`@altara/core`](https://www.npmjs.com/package/@altara/core) | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
+| [`@altara/ros`](https://www.npmjs.com/package/@altara/ros) | ROS2 / rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
+| [`@altara/mqtt`](https://www.npmjs.com/package/@altara/mqtt) | MQTT-over-WebSocket adapter for IoT brokers. |
+
+## Links
+
+- [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
+- [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
+- [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
+
 ## License
 
-MIT
+MIT — see [LICENSE](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE).
