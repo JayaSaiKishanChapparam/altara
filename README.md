@@ -6,6 +6,7 @@
 
 [![@altara/core](https://img.shields.io/npm/v/@altara/core?color=1D9E75&label=%40altara%2Fcore)](https://npmjs.com/package/@altara/core)
 [![@altara/aerospace](https://img.shields.io/npm/v/@altara/aerospace?color=378ADD&label=%40altara%2Faerospace)](https://npmjs.com/package/@altara/aerospace)
+[![@altara/av](https://img.shields.io/npm/v/@altara/av?color=D946EF&label=%40altara%2Fav)](https://npmjs.com/package/@altara/av)
 [![@altara/ros](https://img.shields.io/npm/v/@altara/ros?color=EF9F27&label=%40altara%2Fros)](https://npmjs.com/package/@altara/ros)
 [![@altara/mqtt](https://img.shields.io/npm/v/@altara/mqtt?color=A06CD5&label=%40altara%2Fmqtt)](https://npmjs.com/package/@altara/mqtt)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/core?color=888780&label=core%20gzip)](https://bundlephobia.com/package/@altara/core)
@@ -18,6 +19,7 @@
 | --- | --- |
 | [`@altara/core`](packages/core) | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
 | [`@altara/aerospace`](packages/aerospace) | Flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
+| [`@altara/av`](packages/av) | Autonomous-vehicle UI — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace. |
 | [`@altara/ros`](packages/ros) | rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
 | [`@altara/mqtt`](packages/mqtt) | MQTT-over-WebSocket adapter (re-exports `createMqttAdapter` from core). |
 
@@ -29,6 +31,7 @@ npm install @altara/core
 
 # Add the extras you need:
 npm install @altara/aerospace        # flight instruments
+npm install @altara/av three         # autonomous-vehicle UI (three is an optional peer dep)
 npm install @altara/ros              # ROS2 / rosbridge
 npm install @altara/mqtt mqtt        # MQTT brokers (mqtt is an optional peer dep)
 ```
@@ -104,6 +107,37 @@ Plus `createWorkerDataSource` (off-thread WebSocket pipeline for ≥500 Hz feeds
 
 11 components total: `PrimaryFlightDisplay` · `HorizontalSituationIndicator` · `Altimeter` · `VerticalSpeedIndicator` · `AirspeedIndicator` · `EngineInstrumentCluster` · `RadioAltimeter` · `TerrainAwareness` · `TCASDisplay` · `AutopilotModeAnnunciator` · `FuelGauge`. All canvas/SVG, all support `mockMode`, all consume any `AltaraDataSource`.
 
+### `@altara/av` — autonomous-vehicle UI
+
+```tsx
+import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
+
+<LiDARPointCloud mockMode width={800} height={500} />
+<OccupancyGrid mockMode width={400} height={400} />
+<ControlTrace mockMode windowMs={15_000} />
+```
+
+11 components total: `LiDARPointCloud` (Three.js, lazy-imported as an optional peer dep) · `OccupancyGrid` · `ObjectDetectionOverlay` · `PathPlannerOverlay` · `VelocityVectorDisplay` · `PerceptionStateMachine` · `SensorHealthMatrix` · `CameraFeed` · `ControlTrace` · `RadarSweep` · `SLAMMap`.
+
+<table>
+<tr>
+<td align="center" colspan="2">
+<img src="apps/storybook/public/gifs/av-lidar.gif" width="520" alt="LiDAR point cloud — Three.js"/><br/>
+<sub><b>LiDARPointCloud</b> — Three.js point cloud, color by intensity</sub>
+</td>
+</tr>
+<tr>
+<td align="center">
+<img src="apps/storybook/public/gifs/av-occgrid.gif" width="280" alt="Occupancy grid"/><br/>
+<sub><b>OccupancyGrid</b></sub>
+</td>
+<td align="center">
+<img src="apps/storybook/public/gifs/av-radar.gif" width="240" alt="Radar sweep"/><br/>
+<sub><b>RadarSweep</b></sub>
+</td>
+</tr>
+</table>
+
 ### `@altara/ros` — ROS2 / rosbridge
 
 ```tsx
@@ -140,6 +174,7 @@ JSON / string / binary payload decoding, MQTT topic wildcards (`+`, `#`).
 | Embeds in React app | ✅ Native | ❌ iframe only | ❌ Separate app | ✅ Native |
 | 60fps canvas rendering | ✅ | ❌ SVG | ✅ | ❌ SVG |
 | Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Partial | ❌ |
+| AV / LiDAR / perception | ✅ Native (Three.js) | ❌ | ✅ Native | ❌ |
 | ROS2 adapter | ✅ Native | ⚠️ Plugin | ✅ Native | ❌ |
 | MQTT adapter | ✅ Native | ⚠️ Plugin | ❌ | ❌ |
 | Bundle size | <30KB gz (core) | Standalone app | Standalone app | ~80KB gz |
@@ -182,6 +217,7 @@ Releases are automated. Merging a PR with a changeset to `main` opens a "Version
 packages/
   core/        @altara/core
   aerospace/   @altara/aerospace
+  av/          @altara/av
   ros/         @altara/ros
   mqtt/        @altara/mqtt
 apps/
@@ -195,7 +231,7 @@ docs/          cross-cutting docs (accessibility, etc.)
 
 ## Links
 
-- **npm** — [`@altara/core`](https://npmjs.com/package/@altara/core) · [`@altara/aerospace`](https://npmjs.com/package/@altara/aerospace) · [`@altara/ros`](https://npmjs.com/package/@altara/ros) · [`@altara/mqtt`](https://npmjs.com/package/@altara/mqtt)
+- **npm** — [`@altara/core`](https://npmjs.com/package/@altara/core) · [`@altara/aerospace`](https://npmjs.com/package/@altara/aerospace) · [`@altara/av`](https://npmjs.com/package/@altara/av) · [`@altara/ros`](https://npmjs.com/package/@altara/ros) · [`@altara/mqtt`](https://npmjs.com/package/@altara/mqtt)
 - **[GitHub Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)** — questions, ideas, what-are-you-building threads
 - **[CONTRIBUTING](./CONTRIBUTING.md)** — dev setup, PR checklist, story / guide patterns
 
