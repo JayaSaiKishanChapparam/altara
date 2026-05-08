@@ -1,6 +1,6 @@
 {
   "name": "@altara/av",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Autonomous-vehicle React components for Altara — LiDAR point cloud (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, SLAM map.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",

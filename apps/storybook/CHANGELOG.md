@@ -1,5 +1,12 @@
 # @altara/storybook
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [4c9476e]
+  - @altara/av@0.1.0
+
 ## 0.0.2
 
 ### Patch Changes
