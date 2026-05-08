@@ -102,16 +102,18 @@ Every component accepts an `AltaraDataSource` from `@altara/core`. Pair with [`@
 
 ## Documentation
 
-The full component playground — Default + variant stories per component, props in the Controls panel, dark/light theme toggle — lives in the project Storybook. Run it locally:
+- **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — open the **AV/** section for Default + variant stories per component, props in Controls, dark/light theme toggle.
+- **[🛰️ Live demo](https://jayasaikishanchapparam.github.io/altara/demo/)** — Autonomous Vehicle tab (LiDAR, occupancy grid, radar, control trace, perception).
+
+Or run them locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
 cd altara
 pnpm install
-pnpm --filter @altara/storybook storybook
+pnpm --filter @altara/storybook storybook   # http://localhost:6006
+pnpm --filter @altara/demo dev              # http://localhost:5173
 ```
-
-Then open the **AV/** section.
 
 ## Sibling packages
 
@@ -124,6 +126,7 @@ Then open the **AV/** section.
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

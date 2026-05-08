@@ -78,7 +78,10 @@ const battery = createBatteryStateAdapter({
 
 ## Documentation
 
-The full **Connecting ROS2** guide — Docker setup, multi-topic dashboards, timestamp source modes, throttling, troubleshooting table — lives in the project Storybook. Run it locally:
+- **[📚 Connecting ROS2 guide (live Storybook)](https://jayasaikishanchapparam.github.io/altara/storybook/?path=/docs/guides-connecting-ros2--api-reference)** — Docker setup, multi-topic dashboards, timestamp source modes, throttling, troubleshooting.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — see the components a rosbridge feed would drive.
+
+Or run Storybook locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
@@ -99,6 +102,7 @@ Then open **Guides → Connecting ROS2**.
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

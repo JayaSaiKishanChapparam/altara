@@ -2,6 +2,8 @@
 
 Thanks for the interest. Altara is an MIT-licensed React component library for real-time telemetry visualization. The fastest way to help is to fix a bug, sharpen a docstring, write a recipe for the cookbook, or open an issue with a clear repro.
 
+> Live docs and demo: **[Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** · **[Demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** (deployed from `main` via GitHub Pages).
+
 ## Prerequisites
 
 - **Node.js** 20 LTS or higher (`node --version`)
@@ -36,8 +38,8 @@ packages/
   industrial/  # @altara/industrial — waterfall spectrogram (FFT), OEE, PID tuning, alarms, trend recorder, P&ID, process flow, motor, predictive-maintenance
   mqtt/        # @altara/mqtt — MQTT-over-WebSocket adapter (re-export of core's createMqttAdapter)
 apps/
-  storybook/   # @altara/storybook — interactive docs (run locally with `pnpm --filter @altara/storybook storybook`)
-  demo/        # Vite demo app
+  storybook/   # @altara/storybook — interactive docs (deployed at /altara/storybook/, or `pnpm --filter @altara/storybook storybook` locally)
+  demo/        # @altara/demo — multi-package live dashboard (deployed at /altara/demo/)
 docker/
   ros2/        # rosbridge dev environment
 .changeset/    # pending version bumps; consumed by the release pipeline

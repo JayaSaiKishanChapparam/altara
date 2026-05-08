@@ -83,7 +83,7 @@ export function App() {
 </tr>
 </table>
 
-> Live, interactive demos of every component are at the [Altara Storybook](https://github.com/JayaSaiKishanChapparam/altara) — `pnpm --filter @altara/storybook storybook`.
+> 🚀 **[Open the live Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** for interactive demos — or jump straight to the **[live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** (Drone / Aerospace tab).
 
 ## Data sources
 
@@ -93,16 +93,18 @@ Pair with [`@altara/ros`](https://www.npmjs.com/package/@altara/ros) to wire a P
 
 ## Documentation
 
-The full component playground — Default + Playground stories per component, props in the Controls panel, dark/light theme toggle — lives in the project Storybook. Run it locally:
+- **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — open the **Aerospace/** section for the full component playground (Default + Playground stories, props in Controls, dark/light theme toggle).
+- **[🛰️ Live demo](https://jayasaikishanchapparam.github.io/altara/demo/)** — Drone / Aerospace tab.
+
+Or run them locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
 cd altara
 pnpm install
-pnpm --filter @altara/storybook storybook
+pnpm --filter @altara/storybook storybook   # http://localhost:6006
+pnpm --filter @altara/demo dev              # http://localhost:5173
 ```
-
-Then open the **Aerospace/** section.
 
 ## Sibling packages
 
@@ -114,6 +116,7 @@ Then open the **Aerospace/** section.
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

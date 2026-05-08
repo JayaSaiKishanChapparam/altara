@@ -93,16 +93,18 @@ Every component accepts an `AltaraDataSource` from `@altara/core`. Pair with [`@
 
 ## Documentation
 
-The full component playground lives in the project Storybook:
+- **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — open the **Industrial/** section for the full component playground.
+- **[🛰️ Live demo](https://jayasaikishanchapparam.github.io/altara/demo/)** — Industrial / SCADA tab (spectrogram, OEE, alarms, motor, trend recorder, P&ID).
+
+Or run them locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
 cd altara
 pnpm install
-pnpm --filter @altara/storybook storybook
+pnpm --filter @altara/storybook storybook   # http://localhost:6006
+pnpm --filter @altara/demo dev              # http://localhost:5173
 ```
-
-Open the **Industrial/** section.
 
 ## Sibling packages
 
@@ -116,6 +118,7 @@ Open the **Industrial/** section.
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

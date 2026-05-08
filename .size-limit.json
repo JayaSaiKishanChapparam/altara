@@ -1,5 +1,6 @@
 [
   {
+    "name": "@altara/core",
     "path": "packages/core/dist/index.mjs",
     "limit": "30 kB",
     "gzip": true,
@@ -11,6 +12,64 @@
       "react-grid-layout",
       "three",
       "@react-three/fiber",
+      "mqtt",
+      "@altara/core"
+    ]
+  },
+  {
+    "name": "@altara/aerospace",
+    "path": "packages/aerospace/dist/index.mjs",
+    "limit": "25 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "@altara/core"
+    ]
+  },
+  {
+    "name": "@altara/av",
+    "path": "packages/av/dist/index.mjs",
+    "limit": "25 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "three",
+      "@react-three/fiber",
+      "@altara/core"
+    ]
+  },
+  {
+    "name": "@altara/industrial",
+    "path": "packages/industrial/dist/index.mjs",
+    "limit": "25 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "@altara/core"
+    ]
+  },
+  {
+    "name": "@altara/ros",
+    "path": "packages/ros/dist/index.mjs",
+    "limit": "5 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
+      "@altara/core"
+    ]
+  },
+  {
+    "name": "@altara/mqtt",
+    "path": "packages/mqtt/dist/index.mjs",
+    "limit": "1 kB",
+    "gzip": true,
+    "ignore": [
+      "react",
+      "react-dom",
       "mqtt",
       "@altara/core"
     ]

@@ -50,7 +50,10 @@ If you already depend on `@altara/core`, you can `import { createMqttAdapter } f
 
 ## Documentation
 
-The full **Connecting MQTT** guide — broker setup, topic-wildcard routing, JSON vs binary payload handling, throttling, reconnection — lives in the project Storybook. Run it locally:
+- **[📚 Connecting MQTT guide (live Storybook)](https://jayasaikishanchapparam.github.io/altara/storybook/?path=/docs/guides-connecting-mqtt--api-reference)** — broker setup, topic-wildcard routing, JSON vs binary payload handling, throttling, reconnection.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — IoT-style components an MQTT feed would drive.
+
+Or run Storybook locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
@@ -71,6 +74,7 @@ Then open **Guides → Connecting MQTT**.
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

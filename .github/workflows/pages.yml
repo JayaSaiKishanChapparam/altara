@@ -1,0 +1,73 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow only one concurrent deployment, skip queued runs in between.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with: { version: 8 }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm turbo build --filter=@altara/core --filter=@altara/aerospace --filter=@altara/av --filter=@altara/industrial --filter=@altara/ros --filter=@altara/mqtt
+
+      - name: Build Storybook (base=/altara/storybook/)
+        env:
+          STORYBOOK_BASE: /altara/storybook/
+        run: pnpm --filter @altara/storybook build-storybook
+
+      - name: Build demo (base=/altara/demo/)
+        env:
+          BASE: /altara/demo/
+        run: pnpm --filter @altara/demo build
+
+      - name: Compose _site
+        run: |
+          mkdir -p _site
+          cp scripts/pages-landing.html _site/index.html
+          mkdir -p _site/storybook
+          cp -R apps/storybook/storybook-static/. _site/storybook/
+          mkdir -p _site/demo
+          cp -R apps/demo/dist/. _site/demo/
+          # GH Pages serves a 404.html for SPA fallbacks; keep the Storybook one.
+          ls _site _site/storybook _site/demo
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -21,6 +21,12 @@ const config: StorybookConfig = {
   // joshwooding vite plugin ourselves with the right tsconfig + propFilter.
   typescript: { reactDocgen: false },
   async viteFinal(config) {
+    // GH Pages serves Storybook under a sub-path (e.g. /altara/storybook/).
+    // Set STORYBOOK_BASE in CI; defaults to '/' for local dev.
+    if (process.env.STORYBOOK_BASE) {
+      config.base = process.env.STORYBOOK_BASE;
+    }
+
     const { default: docgen } = await import(
       '@joshwooding/vite-plugin-react-docgen-typescript'
     );

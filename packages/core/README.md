@@ -78,17 +78,18 @@ Under 30 KB gzipped. Optional peer deps (`leaflet`, `react-leaflet`, `react-grid
 
 ## Documentation
 
-Interactive component demos, written guides, and the cookbook live in Storybook. Run it locally:
+- **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides (Getting started, Connecting ROS2 / MQTT, Mock data, Theming, Performance), Cookbook dashboards, and Comparisons vs. Grafana / Foxglove.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial`, all driven by mock data.
+
+Or run them locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
 cd altara
 pnpm install
-pnpm --filter @altara/storybook storybook
-# → http://localhost:6006
+pnpm --filter @altara/storybook storybook   # http://localhost:6006
+pnpm --filter @altara/demo dev              # http://localhost:5173
 ```
-
-You'll find the landing page, six guides (Getting started, Connecting ROS2, Connecting MQTT, Mock data, Theming, Performance), three full cookbook dashboards, comparisons vs Grafana / Foxglove, and an interactive playground for every component.
 
 ## Sibling packages
 
@@ -100,6 +101,7 @@ You'll find the landing page, six guides (Getting started, Connecting ROS2, Conn
 
 ## Links
 
+- [Storybook (live)](https://jayasaikishanchapparam.github.io/altara/storybook/) · [Demo dashboard (live)](https://jayasaikishanchapparam.github.io/altara/demo/)
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)

@@ -20,8 +20,8 @@ jobs:
       - run: pnpm turbo lint
       - run: pnpm turbo test
       - run: pnpm turbo build
-      - name: Check bundle size
-        run: pnpm --filter @altara/core exec size-limit
+      - name: Check bundle size (all packages)
+        run: pnpm exec size-limit
 
   storybook:
     runs-on: ubuntu-latest

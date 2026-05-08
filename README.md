@@ -217,14 +217,17 @@ JSON / string / binary payload decoding, MQTT topic wildcards (`+`, `#`).
 
 ## Documentation
 
-Interactive component demos, written guides, and the cookbook live in Storybook. Run it locally:
+- **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides, the Cookbook, and Comparisons vs. Grafana / Foxglove.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial` packages, all driven by mock data.
+
+Or run them locally:
 
 ```bash
 git clone https://github.com/JayaSaiKishanChapparam/altara.git
 cd altara
 pnpm install
-pnpm --filter @altara/storybook storybook
-# → http://localhost:6006
+pnpm --filter @altara/storybook storybook   # http://localhost:6006
+pnpm --filter @altara/demo dev              # http://localhost:5173
 ```
 
 You'll find a landing page, a six-part **Guides** section (Getting started, Connecting ROS2, Connecting MQTT, Mock data, Theming, Performance), five full **Cookbook** dashboards (drone, robot arm, IoT sensor grid, drone ground station, AV stack), two honest **Comparisons** vs. Grafana / Foxglove, and an interactive playground for every component across `core`, `aerospace`, `av`, and `industrial`.
@@ -240,6 +243,7 @@ Common commands. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full repositor
 | `pnpm turbo test` | Run unit tests across the workspace |
 | `pnpm turbo lint` | ESLint everywhere |
 | `pnpm --filter @altara/storybook storybook` | Storybook on http://localhost:6006 |
+| `pnpm --filter @altara/demo dev` | Live demo dashboard on http://localhost:5173 |
 | `pnpm --filter @altara/core dev` | Watch + rebuild `@altara/core` |
 | `pnpm changeset` | Add a release note for a PR |
 | `STORY_FILTER=<substring> node scripts/record-gifs.js` | Record demo GIFs (Storybook must be running; `ffmpeg` required) |
@@ -257,8 +261,8 @@ packages/
   ros/         @altara/ros
   mqtt/        @altara/mqtt
 apps/
-  storybook/   @altara/storybook — interactive docs
-  demo/        Vite demo app
+  storybook/   @altara/storybook — interactive docs (deployed to GH Pages)
+  demo/        @altara/demo — live multi-package dashboard (deployed to GH Pages)
 docker/ros2/   rosbridge dev environment
 scripts/       GIF recorder, smoke tests, JSDoc check
 docs/          cross-cutting docs (accessibility, etc.)
@@ -267,6 +271,7 @@ docs/          cross-cutting docs (accessibility, etc.)
 
 ## Links
 
+- **[Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** · **[Live demo](https://jayasaikishanchapparam.github.io/altara/demo/)**
 - **npm** — [`@altara/core`](https://npmjs.com/package/@altara/core) · [`@altara/aerospace`](https://npmjs.com/package/@altara/aerospace) · [`@altara/av`](https://npmjs.com/package/@altara/av) · [`@altara/industrial`](https://npmjs.com/package/@altara/industrial) · [`@altara/ros`](https://npmjs.com/package/@altara/ros) · [`@altara/mqtt`](https://npmjs.com/package/@altara/mqtt)
 - **[GitHub Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)** — questions, ideas, what-are-you-building threads
 - **[CONTRIBUTING](./CONTRIBUTING.md)** — dev setup, PR checklist, story / guide patterns
