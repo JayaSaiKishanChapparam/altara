@@ -1,5 +1,12 @@
 # @altara/storybook
 
+## 0.0.4
+
+### Patch Changes
+
+- Updated dependencies [8419cc9]
+  - @altara/industrial@0.1.0
+
 ## 0.0.3
 
 ### Patch Changes
