@@ -9,7 +9,7 @@ Foxglove is a robotics observability platform. Altara is a React component libra
 ## Use Foxglove when
 
 - You want a full out-of-the-box solution — Foxglove Studio, the cloud platform, the agent — all rolled together.
-- You need 3D robot visualization with URDF, point clouds, and TF trees today.
+- You need full 3D robot visualization — URDF, TF trees, scene-graph editing — today. (Altara handles point clouds via `@altara/av`, but the rest of the 3D scene-graph stack is on the roadmap.)
 - Recording and playback of MCAP / ROS bag files is critical to your workflow.
 - The audience for the dashboards isn't building a custom application — they're roboticists evaluating data.
 - You're happy with the platform's UX and don't need it embedded in your own product.
@@ -28,11 +28,14 @@ Foxglove is a robotics observability platform. Altara is a React component libra
 |---|---|---|
 | **Embedded in a custom React app** | Yes — primary use case. | No — Studio is a desktop / web app. |
 | **Customizable UX / branding** | Full — CSS tokens override every surface. | Theme switcher; not a design-system replacement. |
-| **3D URDF / robot visualization** | Not in v1 (planned for the Pro tier). | First-class. Industry-leading. |
-| **MCAP playback** | Not in v1 (planned for the Pro tier). | First-class. Foxglove maintains the MCAP spec. |
-| **2D telemetry components** | TimeSeries, Gauge, Attitude, SignalPanel, LiveMap, EventLog, MultiAxisPlot. | Equivalent panels exist; less customizable per-panel. |
+| **3D LiDAR point cloud** | Built-in (`@altara/av` `LiDARPointCloud`, Three.js). | First-class. Industry-leading. |
+| **3D URDF / TF tree / scene graph** | Not in v1 (planned). | First-class. Industry-leading. |
+| **MCAP playback** | Not in v1 (planned). | First-class. Foxglove maintains the MCAP spec. |
+| **2D telemetry components** | TimeSeries, Gauge, Attitude, SignalPanel, LiveMap, EventLog, MultiAxisPlot, MultiAxisPlot, plus `@altara/aerospace` (PFD/HSI/TCAS/...) and `@altara/av` (occupancy grid, perception graph, radar, control trace, SLAM). | Equivalent panels exist; less customizable per-panel. |
+| **Aerospace instruments (PFD, HSI, TCAS, TAWS)** | Built-in (`@altara/aerospace`). | Not provided. |
+| **AV-pipeline UI (perception graph, SLAM, sensor health, control trace)** | Built-in (`@altara/av`). | Equivalent panels for some; not a unified AV stack. |
 | **rosbridge adapter** | Built-in (`@altara/ros`) with typed factories per `sensor_msgs/*`. | Native ROS support inside Studio. |
-| **MQTT support** | Built-in (`createMqttAdapter`). | Available via plugins / Foxglove agent. |
+| **MQTT support** | Built-in (`@altara/mqtt`). | Available via plugins / Foxglove agent. |
 | **High-frequency streams** | Web Worker pipeline keeps the main thread clean at 1 kHz+. | Performant; based on a similar architecture internally. |
 | **Bundle size in your app** | < 30 KB gzip. | N/A — separate application. |
 | **License** | MIT. | Mozilla Public License 2.0 + commercial Foxglove platform. |
@@ -44,4 +47,4 @@ Use Foxglove for the engineering team's day-to-day debugging and log review. Use
 
 ## Roadmap
 
-The biggest gaps today vs. Foxglove are 3D URDF rendering and MCAP playback. Both are on the Pro-tier roadmap (`@altara/three` and `@altara/mcap`). For projects that need them right now, use Foxglove — switching to Altara later is just an `npm install` away.
+The biggest gaps today vs. Foxglove are full 3D URDF / TF-tree rendering and MCAP playback. (`@altara/av` already covers `sensor_msgs/PointCloud2` via `LiDARPointCloud`.) Full URDF + scene-graph and MCAP support are on the roadmap as `@altara/three-scene` and `@altara/mcap`. For projects that need them right now, use Foxglove — switching to Altara later is just an `npm install` away.

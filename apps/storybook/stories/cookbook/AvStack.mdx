@@ -1,0 +1,125 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as LidarStories from '../av/LiDARPointCloud.stories';
+
+<Meta title="Cookbook/AV stack" />
+
+# AV stack
+
+A complete autonomous-vehicle monitoring view built around `@altara/av`. LiDAR + occupancy grid + control trace + perception graph + sensor health + camera feed in one screen — driven by `mockMode` so you can run it without a real ADS today.
+
+## What we're building
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  PerceptionStateMachine  (Localization → Fusion → Planning, status)  │
+├──────────────────────────────────┬───────────────────────────────────┤
+│                                  │                                   │
+│         LiDARPointCloud          │            CameraFeed             │
+│         (Three.js, intensity)    │            + ObjectDetection      │
+│                                  │                                   │
+├──────────────────────────────────┼───────────────────────────────────┤
+│   OccupancyGrid                  │   RadarSweep                      │
+│   vehicle pose + planned path    │                                   │
+├──────────────────────────────────┴───────────────────────────────────┤
+│  ControlTrace  —  throttle / brake / steering (15 s window)          │
+├──────────────────────────────────────────────────────────────────────┤
+│  SensorHealthMatrix  —  per-sensor topic / rate / age / status       │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+## Live preview (LiDAR flagship)
+
+<Canvas of={LidarStories.Default} />
+
+## Full code
+
+Drop this into a `<AvStack />` component anywhere in your tree. The only required dependency beyond `@altara/core` and `@altara/av` is `three` for `LiDARPointCloud` (it's an optional peer dep — if it's missing, the component renders a friendly placeholder and the rest of the stack keeps working).
+
+```tsx
+import '@altara/core/styles.css';
+import { AltaraProvider } from '@altara/core';
+import {
+  LiDARPointCloud,
+  OccupancyGrid,
+  CameraFeed,
+  ObjectDetectionOverlay,
+  RadarSweep,
+  ControlTrace,
+  PerceptionStateMachine,
+  SensorHealthMatrix,
+} from '@altara/av';
+
+export function AvStack() {
+  return (
+    <AltaraProvider theme="dark">
+      <div
+        style={{
+          display: 'grid',
+          gap: 12,
+          padding: 16,
+          background: 'var(--vt-bg-base)',
+        }}
+      >
+        <PerceptionStateMachine mockMode />
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <LiDARPointCloud mockMode width={520} height={320} colorMode="intensity" />
+          <ObjectDetectionOverlay mockMode width={520} height={320} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 12 }}>
+          <OccupancyGrid mockMode width={520} height={380} />
+          <RadarSweep mockMode size={380} range={50} />
+        </div>
+
+        <ControlTrace mockMode windowMs={15_000} showPhase />
+        <SensorHealthMatrix mockMode />
+      </div>
+    </AltaraProvider>
+  );
+}
+```
+
+## Wiring to ROS2 / Autoware
+
+Each AV component maps to a standard ROS2 message type. The cleanest pattern is one `AltaraDataSource` per topic:
+
+| Component | ROS2 message | Typical topic |
+| --- | --- | --- |
+| `LiDARPointCloud` | `sensor_msgs/PointCloud2` | `/velodyne_points`, `/lidar/points` |
+| `OccupancyGrid` | `nav_msgs/OccupancyGrid` | `/map`, `/local_costmap` |
+| `ObjectDetectionOverlay` | `vision_msgs/Detection2DArray` (+ `sensor_msgs/CompressedImage`) | `/perception/detections` (+ `/cam/front/compressed`) |
+| `CameraFeed` | `sensor_msgs/CompressedImage` | `/cam/front/compressed` |
+| `RadarSweep` | `radar_msgs/RadarScan` or `sensor_msgs/LaserScan` | `/radar/front` |
+| `ControlTrace` | three `std_msgs/Float32` channels | `/control/throttle`, `/control/brake`, `/control/steering` |
+| `PerceptionStateMachine` | `diagnostic_msgs/DiagnosticArray` | `/diagnostics` |
+| `SensorHealthMatrix` | `diagnostic_msgs/DiagnosticArray` | `/diagnostics` |
+
+For the Float32-style channels (`ControlTrace`), the typed factories in `@altara/ros` give you a one-liner:
+
+```tsx
+import { createFloat32Adapter } from '@altara/ros';
+import { ControlTrace } from '@altara/av';
+
+const ros = { url: 'ws://localhost:9090' };
+const throttleSource = createFloat32Adapter({ ...ros, topic: '/control/throttle' });
+const brakeSource = createFloat32Adapter({ ...ros, topic: '/control/brake' });
+const steeringSource = createFloat32Adapter({ ...ros, topic: '/control/steering' });
+
+<ControlTrace
+  throttleSource={throttleSource}
+  brakeSource={brakeSource}
+  steeringSource={steeringSource}
+  windowMs={15_000}
+/>
+```
+
+For `LiDARPointCloud`, the `PointCloud2` decoder lives in your own `AltaraDataSource` implementation (or a Web Worker — the messages can be 1 MB+ at 64-beam LiDAR rates). See the [Performance guide](?path=/docs/guides-performance--api-reference) for the worker pattern.
+
+## Production checklist
+
+- Decode `PointCloud2` in a Web Worker — `createWorkerDataSource` from `@altara/core` is the canonical place to put the decoder so the main thread stays at 60 fps.
+- For dense scenes, drop `LiDARPointCloud`'s `maxPoints` prop until the GPU stays well under 8 ms per frame on your target hardware.
+- Wire `SensorHealthMatrix` to `/diagnostics` and use it as the source of truth — display unexpected `stale` / `error` states prominently in the operator UI.
+- Wrap the whole layout in `DashboardLayout` (from `@altara/core`) so the operator can resize panels during a drive.
+- Make sure your `PerceptionStateMachine` `staleness` matches the slowest expected pipeline tick — the default `500 ms` works for ~10 Hz pipelines.

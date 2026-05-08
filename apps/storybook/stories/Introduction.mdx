@@ -4,7 +4,7 @@ import { Meta } from '@storybook/blocks';
 
 # Altara
 
-**Real-time telemetry UI for React.** Purpose-built for robotics, aerospace, and industrial IoT — where generic charting libraries fall short.
+**Real-time telemetry UI for React.** Purpose-built for robotics, aerospace, autonomous vehicles, and industrial IoT — where generic charting libraries fall short.
 
 <img
   src="/gifs/hero.gif"
@@ -12,12 +12,27 @@ import { Meta } from '@storybook/blocks';
   style={{ width: '100%', borderRadius: 8, marginBottom: 24 }}
 />
 
+## Packages
+
+| Package | Description |
+| --- | --- |
+| **`@altara/core`** | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
+| **`@altara/aerospace`** | 11 flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
+| **`@altara/av`** | 11 autonomous-vehicle components — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace. |
+| **`@altara/ros`** | rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
+| **`@altara/mqtt`** | MQTT-over-WebSocket adapter (re-exports `createMqttAdapter` from core). |
+
 ## Install
 
 ```bash
+# Start with core — required for every package below.
 npm install @altara/core
-# Optional adapters:
-npm install @altara/ros    # rosbridge for ROS2
+
+# Add the extras you need:
+npm install @altara/aerospace        # flight instruments
+npm install @altara/av three         # autonomous-vehicle UI (three is an optional peer dep)
+npm install @altara/ros              # ROS2 / rosbridge
+npm install @altara/mqtt mqtt        # MQTT brokers (mqtt is an optional peer dep)
 ```
 
 ## Quick start
@@ -25,10 +40,12 @@ npm install @altara/ros    # rosbridge for ROS2
 ```tsx
 import '@altara/core/styles.css';
 import { AltaraProvider, TimeSeries, Gauge } from '@altara/core';
+import { PrimaryFlightDisplay } from '@altara/aerospace';
 
 export function Dashboard() {
   return (
     <AltaraProvider theme="dark">
+      <PrimaryFlightDisplay mockMode size="md" />
       <TimeSeries mockMode height={240} />
       <Gauge mockMode min={0} max={100} label="Battery" unit="%" />
     </AltaraProvider>
@@ -36,15 +53,19 @@ export function Dashboard() {
 }
 ```
 
+`mockMode` plumbs realistic synthetic data into every component until you swap in a real `dataSource`.
+
 ## What's here
 
 | Section | What you'll find |
 |---------|------------------|
-| **Guides** | Installation, ROS2, MQTT, mock data, theming, performance tuning |
-| **Cookbook** | Full working dashboards — drone, robot arm, IoT sensor grid |
+| **Guides** | Getting started, ROS2 / MQTT adapters, mock data, theming, performance |
+| **Cookbook** | Full working dashboards — drone, robot arm, IoT sensor grid, drone ground station, AV stack |
 | **Comparisons** | Altara vs Grafana, Altara vs Foxglove |
-| **Components** | Interactive demos and full API reference for every component |
-| **Dashboard** | Hero shot — every component in one screen |
+| **Components** | 9 core components with playgrounds and full API reference |
+| **Aerospace** | 11 flight instruments led by `PrimaryFlightDisplay` |
+| **AV** | 11 autonomous-vehicle components led by `LiDARPointCloud` |
+| **Dashboard** | Hero shot — every core component in one screen |
 
 ## Why Altara
 
@@ -52,11 +73,13 @@ Most React charting libraries render via SVG or React DOM. At 100 Hz+ sensor dat
 
 Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
 
-It also ships the domain-specific components engineers actually need — attitude indicators, live GPS maps, threshold-aware gauges — and a typed rosbridge adapter so a one-line import gets you live ROS2 data on screen.
+It also ships the domain-specific components engineers actually need — attitude indicators, live GPS maps, threshold-aware gauges in core, then deeper stacks for aerospace (PFD/HSI/TCAS) and autonomous vehicles (LiDAR/SLAM/perception graphs) — and typed adapters for ROS2 and MQTT so a one-line import gets you live telemetry on screen.
 
 ## Links
 
-- [Browse components](?path=/story/components-timeseries--default)
+- [Browse core components](?path=/story/components-timeseries--default)
+- [Browse aerospace instruments](?path=/story/aerospace-primaryflightdisplay--default)
+- [Browse AV components](?path=/story/av-lidarpointcloud--default)
 - [Connecting ROS2 guide](?path=/docs/guides-connecting-ros2--api-reference)
-- [GitHub](https://github.com/altara/altara)
-- [npm](https://npmjs.com/package/@altara/core)
+- [GitHub](https://github.com/JayaSaiKishanChapparam/altara)
+- [npm (`@altara/core`)](https://npmjs.com/package/@altara/core)

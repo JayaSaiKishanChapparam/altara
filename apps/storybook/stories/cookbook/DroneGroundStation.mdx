@@ -1,0 +1,136 @@
+import { Canvas, Meta } from '@storybook/blocks';
+import * as PfdStories from '../aerospace/PrimaryFlightDisplay.stories';
+
+<Meta title="Cookbook/Drone ground station" />
+
+# Drone ground station
+
+A complete drone ground-control-station view built around `@altara/aerospace`. Five flight instruments + a side panel for engine and fuel — all driven by `mockMode`, ready to swap for a real ROS2 / MAVLink feed.
+
+## What we're building
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  ConnectionBar  (rosbridge URL, latency, msg/s)            │
+├────────────────────────────────────────┬───────────────────┤
+│                                        │  Engine cluster    │
+│        PrimaryFlightDisplay  (lg)      │                    │
+│        attitude · airspeed · altitude  │  Fuel gauge        │
+│        heading · VSI · flight director │                    │
+├──────────────────────┬─────────────────┤  Radio altimeter   │
+│   HSI                │  TCAS           │  + autopilot FMA   │
+│   compass + CDI      │  traffic        │                    │
+└──────────────────────┴─────────────────┴───────────────────┘
+```
+
+## Live preview (PFD with flight director)
+
+<Canvas of={PfdStories.WithFlightDirector} />
+
+## Full code
+
+Drop this into a `<GroundStation />` component anywhere in your tree. Like every Altara dashboard, the only setup is `<AltaraProvider>` at the app root and the one-line stylesheet import.
+
+```tsx
+import '@altara/core/styles.css';
+import { AltaraProvider, ConnectionBar } from '@altara/core';
+import {
+  PrimaryFlightDisplay,
+  HorizontalSituationIndicator,
+  TCASDisplay,
+  EngineInstrumentCluster,
+  FuelGauge,
+  RadioAltimeter,
+  AutopilotModeAnnunciator,
+} from '@altara/aerospace';
+
+export function GroundStation() {
+  return (
+    <AltaraProvider theme="dark">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 320px',
+          gap: 12,
+          padding: 16,
+          background: 'var(--vt-bg-base)',
+        }}
+      >
+        <div style={{ gridColumn: '1 / -1' }}>
+          <ConnectionBar
+            url="ws://localhost:9090"
+            status="connected"
+            latencyMs={14}
+            messagesPerSecond={250}
+          />
+        </div>
+
+        {/* Left column — primary flight + nav */}
+        <div style={{ display: 'grid', gap: 12 }}>
+          <PrimaryFlightDisplay mockMode size="lg" showFlightDirector />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <HorizontalSituationIndicator mockMode size={280} />
+            <TCASDisplay mockMode size={280} rangeNm={6} />
+          </div>
+        </div>
+
+        {/* Right column — engine + fuel + RA + FMA */}
+        <div style={{ display: 'grid', gap: 12 }}>
+          <AutopilotModeAnnunciator mockMode />
+          <EngineInstrumentCluster mockMode engineCount={1} />
+          <FuelGauge mockMode unit="gal" reserve={20} />
+          <RadioAltimeter mockMode size="md" decisionHeight={200} />
+        </div>
+      </div>
+    </AltaraProvider>
+  );
+}
+```
+
+## Wiring to a real autopilot
+
+Most of these instruments key off a `dataSource` whose `TelemetryValue.channel` matches the field they care about. The cleanest pattern: build one `AltaraDataSource` per topic, fan it out across components.
+
+| Component | Channel(s) | Typical source |
+| --- | --- | --- |
+| `PrimaryFlightDisplay` | `roll`, `pitch`, `heading`, `airspeed`, `altitude`, `vs` | `sensor_msgs/Imu` (orientation), `mavros_msgs/VFR_HUD`, `mavros_msgs/Altitude` |
+| `HorizontalSituationIndicator` | `heading`, `course`, `courseDev` | autopilot waypoint manager |
+| `RadioAltimeter` | (single value) | `mavros_msgs/Altitude` (`relative`) |
+| `EngineInstrumentCluster` | (props) | `sensor_msgs/JointState` proxy + custom engine telemetry |
+| `FuelGauge` | (props) | `mavros_msgs/State` (battery_remaining as proxy) |
+| `TCASDisplay` | `traffic` array | ADS-B receiver (Stratux, dump1090, …) |
+| `AutopilotModeAnnunciator` | (props) | `mavros_msgs/State` |
+
+Pair with [`@altara/ros`](?path=/docs/guides-connecting-ros2--api-reference) for the rosbridge plumbing. For non-ROS sources (MAVLink direct), wrap the message stream in your own `AltaraDataSource` — the contract is just three methods.
+
+A minimal IMU → PFD wiring:
+
+```tsx
+import { createRosbridgeAdapter } from '@altara/ros';
+import type { AltaraDataSource, TelemetryValue } from '@altara/core';
+
+// Custom multi-channel source that fans an IMU message into PFD channels.
+function createPfdSource(): AltaraDataSource {
+  const subs = new Set<(v: TelemetryValue) => void>();
+  // Use createRosbridgeAdapter under the hood for connection management,
+  // then re-emit per-channel values from each message body. (See the
+  // Connecting ROS2 guide for the full multi-channel pattern.)
+  // …
+  return {
+    subscribe(cb) { subs.add(cb); return () => subs.delete(cb); },
+    getHistory: () => [],
+    status: 'connected',
+    destroy() { subs.clear(); },
+  };
+}
+
+<PrimaryFlightDisplay dataSource={createPfdSource()} size="lg" />
+```
+
+## Production checklist
+
+- Drive `ConnectionBar` from `useWebSocket` status + a sliding-window message-rate counter, not hardcoded values.
+- For long-haul flights, wrap the ground-station view in `DashboardLayout` (from `@altara/core`) so the operator can resize panels.
+- For the IMU stream specifically, use `createWorkerDataSource` if you exceed ~200 Hz — see the [Performance guide](?path=/docs/guides-performance--api-reference).
+- Add `decisionHeight` and `onDecisionHeight` props on `RadioAltimeter` to wire your audio-alert pipeline.
+- Configure `vne` / `vno` / `vfe` / `vs1` / `vso` props on the airspeed indicator to match the airframe's V-speeds.

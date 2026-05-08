@@ -26,6 +26,25 @@ If you plan to render `LiveMap`, install the optional Leaflet peer deps as well:
 pnpm add leaflet react-leaflet
 ```
 
+### Domain-specific add-ons
+
+`@altara/core` covers every general-purpose component. For domain stacks pull in the matching package:
+
+| Package | When you need it |
+| --- | --- |
+| [`@altara/aerospace`](?path=/story/aerospace-primaryflightdisplay--default) | Flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
+| [`@altara/av`](?path=/story/av-lidarpointcloud--default) | Autonomous-vehicle UI — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace. |
+| [`@altara/ros`](?path=/docs/guides-connecting-ros2--api-reference) | rosbridge / ROS2 adapter with typed factories for common `sensor_msgs/*` types. |
+| [`@altara/mqtt`](?path=/docs/guides-connecting-mqtt--api-reference) | MQTT-over-WebSocket adapter for IoT brokers. |
+
+```bash
+# Only install what you'll use:
+pnpm add @altara/aerospace
+pnpm add @altara/av three        # three is an optional peer dep, only needed for LiDARPointCloud
+pnpm add @altara/ros
+pnpm add @altara/mqtt mqtt       # mqtt is an optional peer dep
+```
+
 ## 2. Import the stylesheet
 
 Altara uses CSS custom properties for theming — no CSS-in-JS, no runtime cost. Import the single stylesheet **once** at your app root:
@@ -106,9 +125,32 @@ export function App() {
 }
 ```
 
+## 6. Reach for a domain stack
+
+When you need flight instruments or AV-pipeline visualisation, the domain packages drop in next to core with the same `mockMode` + `dataSource` contract:
+
+```tsx
+import { AltaraProvider, TimeSeries } from '@altara/core';
+import { PrimaryFlightDisplay } from '@altara/aerospace';
+import { LiDARPointCloud } from '@altara/av';
+
+export function App() {
+  return (
+    <AltaraProvider theme="dark">
+      <PrimaryFlightDisplay mockMode size="md" />
+      <LiDARPointCloud mockMode width={520} height={320} />
+      <TimeSeries mockMode height={200} />
+    </AltaraProvider>
+  );
+}
+```
+
 ## Next steps
 
 - [Connecting ROS2](?path=/docs/guides-connecting-ros2--api-reference) — typed adapters for `sensor_msgs/*`, throttling, timestamp normalization
+- [Connecting MQTT](?path=/docs/guides-connecting-mqtt--api-reference) — broker setup, topic wildcards, JSON / binary payloads
 - [Theming](?path=/docs/guides-theming--api-reference) — token list, custom brand colors, dark/light/auto
 - [Performance](?path=/docs/guides-performance--api-reference) — RingBuffer, fps tuning, the Web Worker pipeline for ≥500 Hz feeds
-- [Cookbook → Drone dashboard](?path=/docs/cookbook-drone-dashboard--api-reference) — a complete 6-component layout you can copy-paste
+- [Cookbook → Drone dashboard](?path=/docs/cookbook-drone-dashboard--api-reference) — a complete 6-component core layout you can copy-paste
+- [Cookbook → Drone ground station](?path=/docs/cookbook-drone-ground-station--api-reference) — full aerospace-package layout
+- [Cookbook → AV stack](?path=/docs/cookbook-av-stack--api-reference) — LiDAR + map + perception graph + control trace
