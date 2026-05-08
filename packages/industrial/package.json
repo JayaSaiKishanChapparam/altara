@@ -1,6 +1,6 @@
 {
   "name": "@altara/industrial",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Industrial / SCADA / HMI React components for Altara — waterfall spectrogram (FFT), OEE dashboard, PID tuning, alarm annunciator, multi-pen trend recorder, P&ID symbols, process flow diagram, motor dashboard, predictive-maintenance gauge for manufacturing, energy, and process-control HMIs.",
   "license": "MIT",
   "author": "Jaya Sai Kishan Chapparam",
