@@ -19,6 +19,7 @@ import { Meta } from '@storybook/blocks';
 | **`@altara/core`** | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
 | **`@altara/aerospace`** | 11 flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
 | **`@altara/av`** | 11 autonomous-vehicle components — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace. |
+| **`@altara/industrial`** | 9 SCADA / HMI components — waterfall spectrogram (FFT), OEE dashboard, PID tuning, alarm annunciator, trend recorder, P&ID symbols, process flow, motor dashboard, predictive-maintenance gauge. |
 | **`@altara/ros`** | rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
 | **`@altara/mqtt`** | MQTT-over-WebSocket adapter (re-exports `createMqttAdapter` from core). |
 
@@ -31,6 +32,7 @@ npm install @altara/core
 # Add the extras you need:
 npm install @altara/aerospace        # flight instruments
 npm install @altara/av three         # autonomous-vehicle UI (three is an optional peer dep)
+npm install @altara/industrial       # SCADA / HMI / industrial-IoT
 npm install @altara/ros              # ROS2 / rosbridge
 npm install @altara/mqtt mqtt        # MQTT brokers (mqtt is an optional peer dep)
 ```
@@ -65,6 +67,7 @@ export function Dashboard() {
 | **Components** | 9 core components with playgrounds and full API reference |
 | **Aerospace** | 11 flight instruments led by `PrimaryFlightDisplay` |
 | **AV** | 11 autonomous-vehicle components led by `LiDARPointCloud` |
+| **Industrial** | 9 SCADA / HMI components led by `WaterfallSpectrogram` |
 | **Dashboard** | Hero shot — every core component in one screen |
 
 ## Why Altara
@@ -80,6 +83,7 @@ It also ships the domain-specific components engineers actually need — attitud
 - [Browse core components](?path=/story/components-timeseries--default)
 - [Browse aerospace instruments](?path=/story/aerospace-primaryflightdisplay--default)
 - [Browse AV components](?path=/story/av-lidarpointcloud--default)
+- [Browse industrial components](?path=/story/industrial-waterfallspectrogram--default)
 - [Connecting ROS2 guide](?path=/docs/guides-connecting-ros2--api-reference)
 - [GitHub](https://github.com/JayaSaiKishanChapparam/altara)
 - [npm (`@altara/core`)](https://npmjs.com/package/@altara/core)

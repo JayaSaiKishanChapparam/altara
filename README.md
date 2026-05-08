@@ -7,7 +7,8 @@
 [![@altara/core](https://img.shields.io/npm/v/@altara/core?color=1D9E75&label=%40altara%2Fcore)](https://npmjs.com/package/@altara/core)
 [![@altara/aerospace](https://img.shields.io/npm/v/@altara/aerospace?color=378ADD&label=%40altara%2Faerospace)](https://npmjs.com/package/@altara/aerospace)
 [![@altara/av](https://img.shields.io/npm/v/@altara/av?color=D946EF&label=%40altara%2Fav)](https://npmjs.com/package/@altara/av)
-[![@altara/ros](https://img.shields.io/npm/v/@altara/ros?color=EF9F27&label=%40altara%2Fros)](https://npmjs.com/package/@altara/ros)
+[![@altara/industrial](https://img.shields.io/npm/v/@altara/industrial?color=EF9F27&label=%40altara%2Findustrial)](https://npmjs.com/package/@altara/industrial)
+[![@altara/ros](https://img.shields.io/npm/v/@altara/ros?color=B57EE5&label=%40altara%2Fros)](https://npmjs.com/package/@altara/ros)
 [![@altara/mqtt](https://img.shields.io/npm/v/@altara/mqtt?color=A06CD5&label=%40altara%2Fmqtt)](https://npmjs.com/package/@altara/mqtt)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/core?color=888780&label=core%20gzip)](https://bundlephobia.com/package/@altara/core)
 [![CI](https://github.com/JayaSaiKishanChapparam/altara/actions/workflows/ci.yml/badge.svg)](https://github.com/JayaSaiKishanChapparam/altara/actions)
@@ -20,6 +21,7 @@
 | [`@altara/core`](packages/core) | Components, hooks, MQTT/mock adapters, design tokens. The starting point. |
 | [`@altara/aerospace`](packages/aerospace) | Flight instruments — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter. |
 | [`@altara/av`](packages/av) | Autonomous-vehicle UI — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace. |
+| [`@altara/industrial`](packages/industrial) | SCADA / HMI — waterfall spectrogram (FFT), OEE dashboard, PID tuning, alarm annunciator, trend recorder, P&ID symbols, process flow, motor dashboard, predictive-maintenance gauge. |
 | [`@altara/ros`](packages/ros) | rosbridge adapter + typed factories for common `sensor_msgs/*` message types. |
 | [`@altara/mqtt`](packages/mqtt) | MQTT-over-WebSocket adapter (re-exports `createMqttAdapter` from core). |
 
@@ -32,6 +34,7 @@ npm install @altara/core
 # Add the extras you need:
 npm install @altara/aerospace        # flight instruments
 npm install @altara/av three         # autonomous-vehicle UI (three is an optional peer dep)
+npm install @altara/industrial       # SCADA / HMI / industrial-IoT
 npm install @altara/ros              # ROS2 / rosbridge
 npm install @altara/mqtt mqtt        # MQTT brokers (mqtt is an optional peer dep)
 ```
@@ -119,6 +122,37 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 
 11 components total: `LiDARPointCloud` (Three.js, lazy-imported as an optional peer dep) · `OccupancyGrid` · `ObjectDetectionOverlay` · `PathPlannerOverlay` · `VelocityVectorDisplay` · `PerceptionStateMachine` · `SensorHealthMatrix` · `CameraFeed` · `ControlTrace` · `RadarSweep` · `SLAMMap`.
 
+### `@altara/industrial` — SCADA / HMI / industrial-IoT
+
+```tsx
+import { WaterfallSpectrogram, OEEDashboard, AlarmAnnunciatorPanel } from '@altara/industrial';
+
+<WaterfallSpectrogram mockMode width={720} height={360} />
+<OEEDashboard mockMode shift="A1" />
+<AlarmAnnunciatorPanel mockMode columns={6} />
+```
+
+9 components total: `WaterfallSpectrogram` (FFT + Canvas, flagship) · `OEEDashboard` · `AlarmAnnunciatorPanel` · `TrendRecorder` · `PIDTuningPanel` · `PIDNode` (ISA 5.1 symbol) · `ProcessFlowDiagram` · `MotorDashboard` · `PredictiveMaintenanceGauge`.
+
+<table>
+<tr>
+<td align="center" colspan="2">
+<img src="apps/storybook/public/gifs/industrial-spectrogram.gif" width="640" alt="Waterfall spectrogram — FFT"/><br/>
+<sub><b>WaterfallSpectrogram</b> — Hann + radix-2 FFT, dB color map</sub>
+</td>
+</tr>
+<tr>
+<td align="center">
+<img src="apps/storybook/public/gifs/industrial-oee.gif" width="280" alt="OEE dashboard"/><br/>
+<sub><b>OEEDashboard</b></sub>
+</td>
+<td align="center">
+<img src="apps/storybook/public/gifs/industrial-alarms.gif" width="320" alt="Alarm annunciator panel"/><br/>
+<sub><b>AlarmAnnunciatorPanel</b></sub>
+</td>
+</tr>
+</table>
+
 <table>
 <tr>
 <td align="center" colspan="2">
@@ -175,6 +209,7 @@ JSON / string / binary payload decoding, MQTT topic wildcards (`+`, `#`).
 | 60fps canvas rendering | ✅ | ❌ SVG | ✅ | ❌ SVG |
 | Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Partial | ❌ |
 | AV / LiDAR / perception | ✅ Native (Three.js) | ❌ | ✅ Native | ❌ |
+| Industrial / SCADA / HMI | ✅ Native (FFT, OEE, P&ID, alarms) | ⚠️ Plugin | ❌ | ❌ |
 | ROS2 adapter | ✅ Native | ⚠️ Plugin | ✅ Native | ❌ |
 | MQTT adapter | ✅ Native | ⚠️ Plugin | ❌ | ❌ |
 | Bundle size | <30KB gz (core) | Standalone app | Standalone app | ~80KB gz |
@@ -218,6 +253,7 @@ packages/
   core/        @altara/core
   aerospace/   @altara/aerospace
   av/          @altara/av
+  industrial/  @altara/industrial
   ros/         @altara/ros
   mqtt/        @altara/mqtt
 apps/
@@ -231,7 +267,7 @@ docs/          cross-cutting docs (accessibility, etc.)
 
 ## Links
 
-- **npm** — [`@altara/core`](https://npmjs.com/package/@altara/core) · [`@altara/aerospace`](https://npmjs.com/package/@altara/aerospace) · [`@altara/av`](https://npmjs.com/package/@altara/av) · [`@altara/ros`](https://npmjs.com/package/@altara/ros) · [`@altara/mqtt`](https://npmjs.com/package/@altara/mqtt)
+- **npm** — [`@altara/core`](https://npmjs.com/package/@altara/core) · [`@altara/aerospace`](https://npmjs.com/package/@altara/aerospace) · [`@altara/av`](https://npmjs.com/package/@altara/av) · [`@altara/industrial`](https://npmjs.com/package/@altara/industrial) · [`@altara/ros`](https://npmjs.com/package/@altara/ros) · [`@altara/mqtt`](https://npmjs.com/package/@altara/mqtt)
 - **[GitHub Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)** — questions, ideas, what-are-you-building threads
 - **[CONTRIBUTING](./CONTRIBUTING.md)** — dev setup, PR checklist, story / guide patterns
 

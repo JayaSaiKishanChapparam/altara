@@ -33,6 +33,7 @@ packages/
   ros/         # @altara/ros — rosbridge adapter + typed factories for common ROS msg types
   aerospace/   # @altara/aerospace — PFD, HSI, altimeter, airspeed, VSI, engine cluster, TCAS, TAWS, FMA, fuel gauge, radio altimeter
   av/          # @altara/av — LiDAR (Three.js), occupancy grid, object detection, path planner, perception state machine, SLAM, radar, control trace
+  industrial/  # @altara/industrial — waterfall spectrogram (FFT), OEE, PID tuning, alarms, trend recorder, P&ID, process flow, motor, predictive-maintenance
   mqtt/        # @altara/mqtt — MQTT-over-WebSocket adapter (re-export of core's createMqttAdapter)
 apps/
   storybook/   # @altara/storybook — interactive docs (run locally with `pnpm --filter @altara/storybook storybook`)
