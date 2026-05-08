@@ -122,6 +122,25 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 
 11 components total: `LiDARPointCloud` (Three.js, lazy-imported as an optional peer dep) · `OccupancyGrid` · `ObjectDetectionOverlay` · `PathPlannerOverlay` · `VelocityVectorDisplay` · `PerceptionStateMachine` · `SensorHealthMatrix` · `CameraFeed` · `ControlTrace` · `RadarSweep` · `SLAMMap`.
 
+<table>
+<tr>
+<td align="center" colspan="2">
+<img src="apps/storybook/public/gifs/av-lidar.gif" width="520" alt="LiDAR point cloud — Three.js"/><br/>
+<sub><b>LiDARPointCloud</b> — Three.js point cloud, color by intensity</sub>
+</td>
+</tr>
+<tr>
+<td align="center">
+<img src="apps/storybook/public/gifs/av-occgrid.gif" width="280" alt="Occupancy grid"/><br/>
+<sub><b>OccupancyGrid</b></sub>
+</td>
+<td align="center">
+<img src="apps/storybook/public/gifs/av-radar.gif" width="240" alt="Radar sweep"/><br/>
+<sub><b>RadarSweep</b></sub>
+</td>
+</tr>
+</table>
+
 ### `@altara/industrial` — SCADA / HMI / industrial-IoT
 
 ```tsx
@@ -149,25 +168,6 @@ import { WaterfallSpectrogram, OEEDashboard, AlarmAnnunciatorPanel } from '@alta
 <td align="center">
 <img src="apps/storybook/public/gifs/industrial-alarms.gif" width="320" alt="Alarm annunciator panel"/><br/>
 <sub><b>AlarmAnnunciatorPanel</b></sub>
-</td>
-</tr>
-</table>
-
-<table>
-<tr>
-<td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/av-lidar.gif" width="520" alt="LiDAR point cloud — Three.js"/><br/>
-<sub><b>LiDARPointCloud</b> — Three.js point cloud, color by intensity</sub>
-</td>
-</tr>
-<tr>
-<td align="center">
-<img src="apps/storybook/public/gifs/av-occgrid.gif" width="280" alt="Occupancy grid"/><br/>
-<sub><b>OccupancyGrid</b></sub>
-</td>
-<td align="center">
-<img src="apps/storybook/public/gifs/av-radar.gif" width="240" alt="Radar sweep"/><br/>
-<sub><b>RadarSweep</b></sub>
 </td>
 </tr>
 </table>
@@ -227,7 +227,7 @@ pnpm --filter @altara/storybook storybook
 # → http://localhost:6006
 ```
 
-You'll find a landing page, a six-part **Guides** section (Getting started, Connecting ROS2, Connecting MQTT, Mock data, Theming, Performance), three full **Cookbook** dashboards, two honest **Comparisons** vs. Grafana / Foxglove, and an interactive playground for every component across `core` and `aerospace`.
+You'll find a landing page, a six-part **Guides** section (Getting started, Connecting ROS2, Connecting MQTT, Mock data, Theming, Performance), five full **Cookbook** dashboards (drone, robot arm, IoT sensor grid, drone ground station, AV stack), two honest **Comparisons** vs. Grafana / Foxglove, and an interactive playground for every component across `core`, `aerospace`, `av`, and `industrial`.
 
 ## Development
 
