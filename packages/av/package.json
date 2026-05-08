@@ -1,0 +1,90 @@
+{
+  "name": "@altara/av",
+  "version": "0.0.1",
+  "description": "Autonomous-vehicle React components for Altara — LiDAR point cloud (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, SLAM map.",
+  "license": "MIT",
+  "author": "Jaya Sai Kishan Chapparam",
+  "homepage": "https://github.com/JayaSaiKishanChapparam/altara/tree/main/packages/av#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JayaSaiKishanChapparam/altara.git",
+    "directory": "packages/av"
+  },
+  "bugs": {
+    "url": "https://github.com/JayaSaiKishanChapparam/altara/issues"
+  },
+  "keywords": [
+    "react",
+    "autonomous-vehicles",
+    "av",
+    "self-driving",
+    "robotics",
+    "lidar",
+    "lidar-react",
+    "point-cloud",
+    "pointcloud2",
+    "three",
+    "threejs",
+    "occupancy-grid",
+    "slam",
+    "slam-map",
+    "object-detection",
+    "perception",
+    "sensor-fusion",
+    "camera-feed",
+    "radar",
+    "radar-sweep",
+    "ros2",
+    "rosbridge",
+    "telemetry",
+    "real-time",
+    "react-components",
+    "altara"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run --passWithNoTests",
+    "lint": "eslint src --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@altara/core": "workspace:*",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@altara/core": "workspace:*",
+    "@testing-library/react": "^15.0.5",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/three": "^0.160.0",
+    "happy-dom": "^14.7.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "three": "^0.160.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  }
+}

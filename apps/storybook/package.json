@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@altara/aerospace": "workspace:*",
+    "@altara/av": "workspace:*",
     "@altara/core": "workspace:*",
     "@altara/ros": "workspace:*",
     "leaflet": "^1.9.4",

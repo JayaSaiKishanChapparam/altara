@@ -44,6 +44,13 @@ const ALL_STORIES = [
   { id: 'aerospace-airspeedindicator--default', name: 'aerospace-asi', w: 180, h: 180, ms: 6000 },
   { id: 'aerospace-terrainawareness--default', name: 'aerospace-taws', w: 360, h: 240, ms: 8000 },
   { id: 'aerospace-tcasdisplay--default', name: 'aerospace-tcas', w: 320, h: 320, ms: 8000 },
+  // ── @altara/av ──────────────────────────────────────────────────────
+  { id: 'av-lidarpointcloud--default', name: 'av-lidar', w: 520, h: 320, ms: 6000 },
+  { id: 'av-occupancygrid--default', name: 'av-occgrid', w: 480, h: 480, ms: 8000 },
+  { id: 'av-radarsweep--default', name: 'av-radar', w: 380, h: 380, ms: 8000 },
+  { id: 'av-controltrace--default', name: 'av-controltrace', w: 720, h: 320, ms: 8000 },
+  { id: 'av-perceptionstatemachine--default', name: 'av-perception', w: 720, h: 240, ms: 9000 },
+  { id: 'av-slammap--default', name: 'av-slam', w: 480, h: 480, ms: 9000 },
 ];
 
 const STORY_FILTER = (process.env.STORY_FILTER || '').toLowerCase();
