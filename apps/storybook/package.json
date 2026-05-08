@@ -13,6 +13,7 @@
     "@altara/aerospace": "workspace:*",
     "@altara/av": "workspace:*",
     "@altara/core": "workspace:*",
+    "@altara/industrial": "workspace:*",
     "@altara/ros": "workspace:*",
     "leaflet": "^1.9.4",
     "react": "^18.3.0",

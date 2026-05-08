@@ -51,6 +51,13 @@ const ALL_STORIES = [
   { id: 'av-controltrace--default', name: 'av-controltrace', w: 720, h: 320, ms: 8000 },
   { id: 'av-perceptionstatemachine--default', name: 'av-perception', w: 720, h: 240, ms: 9000 },
   { id: 'av-slammap--default', name: 'av-slam', w: 480, h: 480, ms: 9000 },
+  // ── @altara/industrial ──────────────────────────────────────────────
+  { id: 'industrial-waterfallspectrogram--default', name: 'industrial-spectrogram', w: 720, h: 360, ms: 9000 },
+  { id: 'industrial-oeedashboard--default', name: 'industrial-oee', w: 540, h: 380, ms: 8000 },
+  { id: 'industrial-alarmannunciatorpanel--default', name: 'industrial-alarms', w: 700, h: 240, ms: 8000 },
+  { id: 'industrial-trendrecorder--default', name: 'industrial-trend', w: 720, h: 280, ms: 8000 },
+  { id: 'industrial-pidtuningpanel--default', name: 'industrial-pid', w: 640, h: 280, ms: 9000 },
+  { id: 'industrial-processflowdiagram--default', name: 'industrial-pfd', w: 820, h: 320, ms: 8000 },
 ];
 
 const STORY_FILTER = (process.env.STORY_FILTER || '').toLowerCase();

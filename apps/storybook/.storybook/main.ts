@@ -36,6 +36,7 @@ const config: StorybookConfig = {
           '../../packages/ros/src/**/*.{ts,tsx}',
           '../../packages/aerospace/src/**/*.{ts,tsx}',
           '../../packages/av/src/**/*.{ts,tsx}',
+          '../../packages/industrial/src/**/*.{ts,tsx}',
           'stories/**/*.{ts,tsx}',
         ],
         shouldExtractLiteralValuesFromEnum: true,
@@ -50,7 +51,8 @@ const config: StorybookConfig = {
             /packages\/core\/src/.test(f) ||
             /packages\/ros\/src/.test(f) ||
             /packages\/aerospace\/src/.test(f) ||
-            /packages\/av\/src/.test(f)
+            /packages\/av\/src/.test(f) ||
+            /packages\/industrial\/src/.test(f)
           ) {
             return true;
           }
@@ -92,6 +94,10 @@ const config: StorybookConfig = {
       {
         find: /^@altara\/av$/,
         replacement: resolve(__dirname, '../../../packages/av/src/index.ts'),
+      } as unknown as { find: string; replacement: string },
+      {
+        find: /^@altara\/industrial$/,
+        replacement: resolve(__dirname, '../../../packages/industrial/src/index.ts'),
       } as unknown as { find: string; replacement: string },
     );
     config.resolve.alias = aliasEntries;

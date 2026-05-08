@@ -10,6 +10,7 @@
     "../../packages/core/src/**/*",
     "../../packages/ros/src/**/*",
     "../../packages/aerospace/src/**/*",
-    "../../packages/av/src/**/*"
+    "../../packages/av/src/**/*",
+    "../../packages/industrial/src/**/*"
   ]
 }
