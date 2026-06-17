@@ -2,6 +2,9 @@
 "@altara/ros": minor
 "@altara/core": minor
 "@altara/aerospace": patch
+"@altara/av": patch
+"@altara/industrial": patch
+"@altara/mqtt": patch
 ---
 
 ROS wiring ergonomics for multi-signal telemetry, plus a battery SoC fix.
@@ -32,7 +35,8 @@ ROS wiring ergonomics for multi-signal telemetry, plus a battery SoC fix.
 - `LiveMap` now turns its marker's nose along the orbit in `mockMode` (great-circle
   bearing of travel); a controlled `heading` prop still wins.
 
-**@altara/aerospace**
+**@altara/aerospace, @altara/av, @altara/industrial, @altara/mqtt**
 
-- No code change — patch release only to re-sync its `@altara/core` peer pin to
-  the new core version.
+- No code change — patch release only to re-sync their `@altara/core` peer pin to
+  the new core version (`^0.1.0`), so the core minor doesn't force major bumps.
+  Each couples to core via type-only / public, unchanged API.
