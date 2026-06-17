@@ -30,13 +30,22 @@ const TMP = path.join(__dirname, '../.gif-tmp');
 // Set STORY_FILTER=<substring> to record only entries whose `name` contains
 // it (case-insensitive). Useful when adding new stories — avoids
 // re-recording the entire set.
+// `out` (optional) overrides the output dir relative to the repo root — used
+// for the article cover, which lives in docs/assets/ rather than the storybook
+// public gifs folder.
 const ALL_STORIES = [
   { id: 'dashboard--hero', name: 'hero', w: 1200, h: 700, ms: 12_000 },
+  // Drone GCS article cover (dev.to cover_image). Layout: 2-col `1fr 1fr`
+  // grid, gap 16, padding 16, PFD size="md". Goes to docs/assets/.
+  { id: 'drone-gcs--default', name: 'drone-gcs-hero', w: 1200, h: 680, ms: 6000, out: 'docs/assets', outW: 1000, fps: 12, colors: 90, dither: 'none' },
+  { id: 'components-gauge--battery-drain', name: 'gauge-battery-drain', w: 360, h: 320, ms: 8000 },
   { id: 'components-timeseries--multi-channel', name: 'time-series', w: 800, h: 300, ms: 8000 },
   { id: 'components-gauge--sizes', name: 'gauge', w: 500, h: 300, ms: 6000 },
   { id: 'components-attitude--combined-motion', name: 'attitude', w: 400, h: 400, ms: 8000 },
   { id: 'components-signalpanel--default', name: 'signal-panel', w: 500, h: 400, ms: 6000 },
-  { id: 'components-livemap--default', name: 'live-map', w: 700, h: 400, ms: 10_000 },
+  // Map tiles are photographic — `dither: 'none'` keeps the static background
+  // identical frame-to-frame and cuts the file from ~25 MB to ~8 MB.
+  { id: 'components-livemap--default', name: 'live-map', w: 700, h: 400, ms: 6000, fps: 12, colors: 96, dither: 'none' },
   // ── @altara/aerospace ───────────────────────────────────────────────
   { id: 'aerospace-primaryflightdisplay--default', name: 'aerospace-pfd', w: 520, h: 390, ms: 8000 },
   { id: 'aerospace-primaryflightdisplay--with-flight-director', name: 'aerospace-pfd-fd', w: 680, h: 510, ms: 8000 },
@@ -99,7 +108,9 @@ async function recordOne(browser, story) {
   if (!video) throw new Error(`No video captured for ${story.id}`);
   const webm = await video.path();
 
-  const gif = path.join(OUT, `${story.name}.gif`);
+  const outDir = story.out ? path.join(__dirname, '..', story.out) : OUT;
+  fs.mkdirSync(outDir, { recursive: true });
+  const gif = path.join(outDir, `${story.name}.gif`);
   const palette = path.join(TMP, `${story.name}.palette.png`);
 
   // Two-pass ffmpeg — palette generation then paletteuse for clean color.
@@ -109,14 +120,22 @@ async function recordOne(browser, story) {
   //
   // 15 fps keeps file size manageable for telemetry traces (live-map's
   // tile imagery is the worst case — accept ~10–15 MB even at this fps).
-  const fps = 15;
-  const filter = `fps=${fps},scale=${story.w}:-1:flags=lanczos`;
+  // Per-story overrides (defaults match the original telemetry-trace tuning).
+  // `outW` decouples the output width from the capture viewport so a wide
+  // layout (e.g. the GCS cover) can render at full size, then downscale.
+  // `dither: 'none'` keeps static photographic regions (map tiles) identical
+  // frame-to-frame, which shrinks map-heavy GIFs dramatically.
+  const fps = story.fps ?? 15;
+  const colors = story.colors ?? 128;
+  const dither = story.dither ?? 'bayer';
+  const outW = story.outW ?? story.w;
+  const filter = `fps=${fps},scale=${outW}:-1:flags=lanczos`;
   execSync(
-    `ffmpeg -y -ss 0.8 -i "${webm}" -vf "${filter},palettegen=max_colors=128" "${palette}"`,
+    `ffmpeg -y -ss 0.8 -i "${webm}" -vf "${filter},palettegen=max_colors=${colors}" "${palette}"`,
     { stdio: 'inherit' },
   );
   execSync(
-    `ffmpeg -y -ss 0.8 -i "${webm}" -i "${palette}" -lavfi "${filter} [x];[x][1:v]paletteuse=dither=bayer" -loop 0 "${gif}"`,
+    `ffmpeg -y -ss 0.8 -i "${webm}" -i "${palette}" -lavfi "${filter} [x];[x][1:v]paletteuse=dither=${dither}" -loop 0 "${gif}"`,
     { stdio: 'inherit' },
   );
   fs.unlinkSync(webm);
