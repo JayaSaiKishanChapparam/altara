@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { ConnectionBar } from '@altara/core';
+import { GcsView } from './views/GcsView';
 import { CoreView } from './views/CoreView';
 import { AerospaceView } from './views/AerospaceView';
 import { AvView } from './views/AvView';
 import { IndustrialView } from './views/IndustrialView';
 
-type ViewKey = 'core' | 'aerospace' | 'av' | 'industrial';
+type ViewKey = 'gcs' | 'core' | 'aerospace' | 'av' | 'industrial';
 
 const TABS: { key: ViewKey; label: string; description: string }[] = [
+  { key: 'gcs', label: 'Drone GCS', description: 'PFD + map + battery + events over @altara/ros' },
   { key: 'core', label: 'Telemetry', description: '@altara/core primitives' },
   { key: 'aerospace', label: 'Drone / Aerospace', description: '@altara/aerospace flight instruments' },
   { key: 'av', label: 'Autonomous Vehicle', description: '@altara/av perception & control' },
@@ -15,7 +17,7 @@ const TABS: { key: ViewKey; label: string; description: string }[] = [
 ];
 
 export function App() {
-  const [active, setActive] = useState<ViewKey>('core');
+  const [active, setActive] = useState<ViewKey>('gcs');
   const tab = TABS.find((t) => t.key === active)!;
 
   return (
@@ -57,6 +59,7 @@ export function App() {
         />
       </div>
 
+      {active === 'gcs' && <GcsView />}
       {active === 'core' && <CoreView />}
       {active === 'aerospace' && <AerospaceView />}
       {active === 'av' && <AvView />}

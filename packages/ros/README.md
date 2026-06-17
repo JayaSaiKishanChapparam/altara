@@ -59,10 +59,11 @@ For common ROS message types, skip the `messageType` + `valueExtractor` boilerpl
 
 | Factory | Message type | Extracted value |
 | --- | --- | --- |
-| `createBatteryStateAdapter` | `sensor_msgs/BatteryState` | `percentage * 100` |
+| `createBatteryStateAdapter` | `sensor_msgs/BatteryState` | `percentage * 100` (voltage fallback — see below) |
 | `createRangeAdapter` | `sensor_msgs/Range` | `range` (m) |
 | `createTemperatureAdapter` | `sensor_msgs/Temperature` | `temperature` (°C) |
 | `createNavSatFixAdapter({ axis })` | `sensor_msgs/NavSatFix` | `latitude` / `longitude` / `altitude` |
+| `createImuAdapter` | `sensor_msgs/Imu` | `{ roll, pitch, yaw }` in degrees (see below) |
 | `createFloat32Adapter` | `std_msgs/Float32` | `data` |
 | `createFloat64Adapter` | `std_msgs/Float64` | `data` |
 
@@ -75,6 +76,75 @@ const battery = createBatteryStateAdapter({
 });
 // hand to any component that takes `dataSource={…}`
 ```
+
+### Battery state of charge with a voltage fallback
+
+PX4 and ArduPilot publish `BatteryState.percentage` as `-1` (or `NaN`) when the
+firmware has no fuel-gauge estimate — the common case on a bare LiPo pack. By
+default that sample is dropped and the gauge stays blank. Pass a `voltageRange`
+to derive an estimate from `voltage` instead:
+
+```ts
+const battery = createBatteryStateAdapter({
+  url: 'ws://localhost:9090',
+  topic: '/mavros/battery',
+  voltageRange: { min: 14.0, max: 16.8 }, // 4S LiPo (3.5–4.2 V/cell)
+});
+```
+
+> ⚠️ The voltage→charge map is a **clamped linear approximation**. A LiPo's
+> discharge curve is non-linear, so treat this as **presence-of-charge**
+> (is there juice left?), **not** an accurate range-remaining percentage. A
+> valid `percentage` from the firmware always takes precedence.
+
+## Multi-channel sources & the PFD
+
+A flight display needs several signals at once (roll, pitch, heading, airspeed,
+altitude). Two helpers make that one coherent `dataSource`:
+
+- **`channels`** — pass a `{ name: extractor }` map to `createRosbridgeAdapter`
+  (or use `createImuAdapter`) to pull several numbers from **one** message over
+  **one** socket. Returns `{ [name]: AltaraDataSource }`.
+- **`mergeChannels`** — union several single-value sources into one
+  channel-tagged source that a multi-input component routes by channel.
+
+`createImuAdapter` converts `sensor_msgs/Imu.orientation` (a quaternion) into
+`{ roll, pitch, yaw }` degree channels for you (the standalone
+`quaternionToEuler(q)` is exported too, clamped at the ±90° poles). Note IMU
+`yaw` is heading in the IMU frame, **not** compass heading — drive the PFD's
+`heading` from `VFR_HUD`.
+
+A full Primary Flight Display wires on **two sockets** — one IMU, one VFR_HUD:
+
+```tsx
+import { PrimaryFlightDisplay } from '@altara/aerospace';
+import { createImuAdapter, createRosbridgeAdapter, mergeChannels } from '@altara/ros';
+
+const imu = createImuAdapter({ url, topic: '/mavros/imu/data' }); // { roll, pitch, yaw }
+const hud = createRosbridgeAdapter({
+  url,
+  topic: '/mavros/vfr_hud',
+  messageType: 'mavros_msgs/VFR_HUD',
+  channels: {
+    heading: (m) => m.heading,
+    airspeed: (m) => m.airspeed * 1.94384, // m/s -> kt
+    altitude: (m) => m.altitude * 3.28084, // m -> ft
+  },
+});
+
+const source = mergeChannels({
+  roll: imu.roll,
+  pitch: imu.pitch,
+  heading: hud.heading,
+  airspeed: hud.airspeed,
+  altitude: hud.altitude,
+});
+
+// <PrimaryFlightDisplay dataSource={source} showFlightDirector />
+```
+
+`mergeChannels` is re-exported from `@altara/ros` (it lives in `@altara/core`),
+so a single import line covers the whole wiring.
 
 ## Documentation
 

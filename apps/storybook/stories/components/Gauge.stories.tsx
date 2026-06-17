@@ -41,6 +41,32 @@ export const WithThresholds: Story = {
   },
 };
 
+// ── Story 2b: Ramp mock profile (draining battery) ─────────────────────
+export const BatteryDrain: Story = {
+  name: 'Battery drain (ramp)',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          "`mockProfile='ramp'` drains the needle monotonically from `max` to `min` and resets, instead of the default back-and-forth sine — a believable draining battery for demos and GIFs.",
+      },
+    },
+  },
+  args: {
+    min: 0,
+    max: 100,
+    mockMode: true,
+    mockProfile: 'ramp',
+    label: 'Battery',
+    unit: '%',
+    thresholds: [
+      { value: 0, color: 'var(--vt-color-danger)' },
+      { value: 20, color: 'var(--vt-color-warn)' },
+      { value: 40, color: 'var(--vt-color-active)' },
+    ],
+  },
+};
+
 // ── Story 3: All three sizes side by side ──────────────────────────────
 export const Sizes: Story = {
   name: 'Sizes',
@@ -65,14 +91,15 @@ export const WithROS2: Story = {
     docs: {
       description: {
         story:
-          'Live battery percentage via `createBatteryStateAdapter` from `@altara/ros`. The adapter scales `sensor_msgs/BatteryState.percentage` (`0..1`) into the gauge\'s `0..100` range. Requires `rosbridge_server` on `ws://localhost:9090`.',
+          "Live battery via `createBatteryStateAdapter` from `@altara/ros`. The adapter scales `sensor_msgs/BatteryState.percentage` (`0..1`) into the gauge's `0..100` range. `voltageRange` derives an approximate state-of-charge from `voltage` when the firmware reports an invalid `percentage` (`-1`/`NaN`) — common on PX4/ArduPilot LiPo packs. Requires `rosbridge_server` on `ws://localhost:9090`.",
       },
     },
   },
   render: () => {
     const source = createBatteryStateAdapter({
       url: 'ws://localhost:9090',
-      topic: '/battery',
+      topic: '/mavros/battery',
+      voltageRange: { min: 14.0, max: 16.8 }, // 4S LiPo fallback
     });
     return (
       <Gauge

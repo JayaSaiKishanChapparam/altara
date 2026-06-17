@@ -185,6 +185,8 @@ const source = createRosbridgeAdapter({
 });
 ```
 
+For multi-input instruments, pass a `channels` map (or use `createImuAdapter` for `roll`/`pitch`/`yaw` off one socket) to fan a single message out into named channels, then `mergeChannels` them into one `dataSource` to wire up a `PrimaryFlightDisplay`.
+
 Pair with `rosbridge_suite` running on the robot or in Docker (`docker compose -f docker/ros2/docker-compose.yml up`).
 
 ### `@altara/mqtt` — MQTT brokers

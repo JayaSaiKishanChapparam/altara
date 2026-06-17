@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createRosbridgeAdapter } from './rosbridge';
 import {
   createBatteryStateAdapter,
   createFloat32Adapter,
   createFloat64Adapter,
+  createImuAdapter,
   createNavSatFixAdapter,
   createRangeAdapter,
   createTemperatureAdapter,
+  quaternionToEuler,
 } from './typed';
 
 class MockWebSocket {
@@ -70,6 +73,153 @@ describe('typed ROS adapter factories', () => {
     lastSocket().publish('/battery', { percentage: 0.42 });
     expect(sub.mock.calls[0][0].value).toBeCloseTo(42);
     ds.destroy();
+  });
+
+  it('createBatteryStateAdapter drops invalid percentage with no voltageRange', () => {
+    const ds = createBatteryStateAdapter({
+      url: 'ws://test',
+      topic: '/battery',
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+    });
+    lastSocket().open();
+    const sub = vi.fn();
+    ds.subscribe(sub);
+    // PX4/ArduPilot publish -1 when there's no SoC estimate.
+    lastSocket().publish('/battery', { percentage: -1, voltage: 15.4 });
+    expect(sub).not.toHaveBeenCalled();
+    ds.destroy();
+  });
+
+  it('createBatteryStateAdapter falls back to a voltage-derived estimate', () => {
+    const ds = createBatteryStateAdapter({
+      url: 'ws://test',
+      topic: '/battery',
+      voltageRange: { min: 14.0, max: 16.8 }, // 4S LiPo
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+    });
+    lastSocket().open();
+    const sub = vi.fn();
+    ds.subscribe(sub);
+    // Invalid percentage, but 15.4 V is exactly halfway 14.0..16.8 → 50%.
+    lastSocket().publish('/battery', { percentage: -1, voltage: 15.4 });
+    expect(sub.mock.calls[0][0].value).toBeCloseTo(50);
+    // A valid percentage still wins over the voltage fallback.
+    lastSocket().publish('/battery', { percentage: 0.9, voltage: 14.0 });
+    expect(sub.mock.calls[1][0].value).toBeCloseTo(90);
+    // Below the empty-pack voltage clamps to 0, not negative.
+    lastSocket().publish('/battery', { percentage: NaN, voltage: 10.0 });
+    expect(sub.mock.calls[2][0].value).toBeCloseTo(0);
+    ds.destroy();
+  });
+
+  it('quaternionToEuler converts identity and known rotations (degrees)', () => {
+    expect(quaternionToEuler({ x: 0, y: 0, z: 0, w: 1 })).toEqual({
+      roll: 0,
+      pitch: 0,
+      yaw: 0,
+    });
+    // 90° roll about X: q = (sin45, 0, 0, cos45).
+    const r = quaternionToEuler({ x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 });
+    expect(r.roll).toBeCloseTo(90);
+    expect(r.pitch).toBeCloseTo(0);
+    expect(r.yaw).toBeCloseTo(0);
+  });
+
+  it('createImuAdapter returns { roll, pitch, yaw } sources off one socket', () => {
+    const imu = createImuAdapter({
+      url: 'ws://test',
+      topic: '/imu',
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+    });
+    lastSocket().open();
+    expect(JSON.parse(lastSocket().sent[0]!).type).toBe('sensor_msgs/Imu');
+    // Exactly one connection backs all three channels.
+    expect(MockWebSocket.instances).toHaveLength(1);
+
+    const rollSub = vi.fn();
+    const pitchSub = vi.fn();
+    const yawSub = vi.fn();
+    imu.roll.subscribe(rollSub);
+    imu.pitch.subscribe(pitchSub);
+    imu.yaw.subscribe(yawSub);
+
+    // 90° roll about X.
+    lastSocket().publish('/imu', {
+      orientation: { x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 },
+    });
+    expect(rollSub.mock.calls[0][0].value).toBeCloseTo(90);
+    expect(pitchSub.mock.calls[0][0].value).toBeCloseTo(0);
+    expect(yawSub.mock.calls[0][0].value).toBeCloseTo(0);
+    // Per-channel sources emit untagged single values (mergeChannels tags them).
+    expect(rollSub.mock.calls[0][0].channel).toBeUndefined();
+
+    imu.roll.destroy();
+    imu.pitch.destroy();
+    imu.yaw.destroy();
+  });
+
+  it('createImuAdapter honors a channel subset', () => {
+    const imu = createImuAdapter({
+      url: 'ws://test',
+      topic: '/imu',
+      channels: ['roll', 'pitch'],
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+    });
+    expect(Object.keys(imu).sort()).toEqual(['pitch', 'roll']);
+    // @ts-expect-error — yaw was not requested, so it isn't on the returned type.
+    expect(imu.yaw).toBeUndefined();
+  });
+
+  it('shared socket is torn down only after the last channel is destroyed', () => {
+    const imu = createImuAdapter({
+      url: 'ws://test',
+      topic: '/imu',
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+    });
+    lastSocket().open();
+    const socket = lastSocket();
+    imu.roll.destroy();
+    imu.pitch.destroy();
+    // Two of three released — socket still open, no unsubscribe yet.
+    expect(socket.readyState).toBe(MockWebSocket.OPEN);
+    imu.yaw.destroy();
+    // Last channel released — unsubscribe sent and socket closed.
+    expect(socket.sent.some((s) => JSON.parse(s).op === 'unsubscribe')).toBe(true);
+    expect(socket.readyState).toBe(MockWebSocket.CLOSED);
+  });
+
+  it('createRosbridgeAdapter channels map returns one source per name', () => {
+    const hud = createRosbridgeAdapter({
+      url: 'ws://test',
+      topic: '/vfr_hud',
+      messageType: 'mavros_msgs/VFR_HUD',
+      socketImpl: MockWebSocket as unknown as typeof WebSocket,
+      channels: {
+        heading: (m) => (m as { heading: number }).heading,
+        airspeed: (m) => (m as { airspeed: number }).airspeed * 1.94384,
+        altitude: (m) => (m as { altitude: number }).altitude * 3.28084,
+      },
+    });
+    lastSocket().open();
+    expect(MockWebSocket.instances).toHaveLength(1);
+    const spd = vi.fn();
+    hud.airspeed.subscribe(spd);
+    lastSocket().publish('/vfr_hud', { heading: 90, airspeed: 10, altitude: 100 });
+    expect(spd.mock.calls[0][0].value).toBeCloseTo(19.4384); // 10 m/s → kt
+    hud.heading.destroy();
+    hud.airspeed.destroy();
+    hud.altitude.destroy();
+  });
+
+  it('createRosbridgeAdapter throws without valueExtractor or channels', () => {
+    expect(() =>
+      createRosbridgeAdapter({
+        url: 'ws://test',
+        topic: '/x',
+        messageType: 'std_msgs/Float64',
+        socketImpl: MockWebSocket as unknown as typeof WebSocket,
+      } as never),
+    ).toThrow(/valueExtractor.*channels/);
   });
 
   it('createFloat32Adapter pulls .data from std_msgs/Float32', () => {

@@ -10,18 +10,17 @@ import type { AltaraDataSource, ConnectionStatus, TelemetryValue } from '@altara
  */
 export type TimeSource = 'wallclock' | 'message' | 'relative';
 
-export interface RosbridgeAdapterOptions {
+/** Connection + buffering options shared by single- and multi-channel adapters. */
+export interface RosbridgeConnectionOptions {
   /** rosbridge_server WebSocket URL — typically `ws://hostname:9090`. */
   url: string;
   /** ROS topic to subscribe to (e.g. `'/drone/battery'`). */
   topic: string;
   /** ROS message type as advertised by the publisher (e.g. `'sensor_msgs/BatteryState'`). */
   messageType: string;
-  /** Pull a numeric sample out of the ROS message body. Throwing or returning NaN drops the sample. */
-  valueExtractor: (msg: unknown) => number;
-  /** History ring-buffer capacity (samples). Default: 10_000. */
+  /** History ring-buffer capacity (samples), per channel. Default: 10_000. */
   bufferSize?: number;
-  /** If set, drop samples that arrive less than this many ms after the previous one. */
+  /** If set, drop *messages* that arrive less than this many ms after the previous one. */
   throttleMs?: number;
   /**
    * Which clock drives the sample's `timestamp`. Default: `'wallclock'`.
@@ -34,6 +33,36 @@ export interface RosbridgeAdapterOptions {
   socketImpl?: typeof WebSocket;
   /** Auto-reconnect base delay in ms. Doubles per attempt, capped at 30 s. Default: 1000. */
   reconnectDelay?: number;
+}
+
+/** Single-channel adapter: pull one number per message. Returns one `AltaraDataSource`. */
+export interface RosbridgeAdapterOptions extends RosbridgeConnectionOptions {
+  /** Pull a single numeric sample out of the ROS message body. Throwing or returning NaN drops it. */
+  valueExtractor: (msg: unknown) => number;
+}
+
+/**
+ * A map of channel name → extractor pulling that channel's number from the
+ * message. The message is untyped wire JSON, so extractors receive `any` — this
+ * keeps inline extractors terse (`m => m.heading`); cast if you want safety.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ChannelExtractors = Record<string, (msg: any) => number>;
+
+/**
+ * Multi-channel adapter: pull several named numbers out of each message over a
+ * single socket. Returns `{ [name]: AltaraDataSource }` — one independent
+ * single-value source per channel, all sharing the same connection. Feed those
+ * into `mergeChannels` to drive a multi-input component like the PFD.
+ */
+export interface RosbridgeChannelAdapterOptions<C extends ChannelExtractors>
+  extends RosbridgeConnectionOptions {
+  /**
+   * Channel extractors, e.g. `{ roll: m => …, pitch: m => … }`. Each pulls one
+   * number; throwing or returning NaN drops just that channel for the message,
+   * the others still emit. All channels from one message share its timestamp.
+   */
+  channels: C;
 }
 
 interface RosbridgeMessage {
@@ -60,31 +89,46 @@ function extractStampMs(msg: unknown): number | undefined {
 
 const MAX_BACKOFF_MS = 30_000;
 
+interface ChannelState {
+  subscribers: Set<(v: TelemetryValue) => void>;
+  history: TelemetryValue[];
+  extract: (msg: unknown) => number;
+}
+
 /**
- * Implements AltaraDataSource over a rosbridge_suite WebSocket. Sends a
- * `subscribe` op on connect and pushes each inbound message through the
- * caller's `valueExtractor`.
+ * Shared rosbridge connection that fans each inbound message out to one or more
+ * named channels, returning an `AltaraDataSource` per channel. A single socket
+ * (one `subscribe`/`unsubscribe`) backs every channel; the socket is torn down
+ * once the *last* channel source is destroyed.
  */
-export function createRosbridgeAdapter(options: RosbridgeAdapterOptions): AltaraDataSource {
+function createConnection(
+  opts: RosbridgeConnectionOptions,
+  extractors: ChannelExtractors,
+): Record<string, AltaraDataSource> {
   const {
     url,
     topic,
     messageType,
-    valueExtractor,
     bufferSize = 10_000,
     throttleMs,
     timeSource = 'wallclock',
     socketImpl,
     reconnectDelay = 1000,
-  } = options;
+  } = opts;
 
   const SocketCtor = socketImpl ?? (globalThis.WebSocket as typeof WebSocket);
   if (!SocketCtor) {
     throw new Error('createRosbridgeAdapter: no WebSocket implementation available');
   }
 
-  const subscribers = new Set<(v: TelemetryValue) => void>();
-  const history: TelemetryValue[] = [];
+  const channelNames = Object.keys(extractors);
+  const channels: Record<string, ChannelState> = {};
+  const live = new Set<string>();
+  for (const name of channelNames) {
+    channels[name] = { subscribers: new Set(), history: [], extract: extractors[name]! };
+    live.add(name);
+  }
+
   let status: ConnectionStatus = 'connecting';
   let socket: WebSocket | null = null;
   let lastEmitMs = Number.NEGATIVE_INFINITY;
@@ -110,14 +154,8 @@ export function createRosbridgeAdapter(options: RosbridgeAdapterOptions): Altara
     if (throttleMs !== undefined && wallNow - lastEmitMs < throttleMs) return;
     lastEmitMs = wallNow;
 
-    let value: number;
-    try {
-      value = valueExtractor(parsed.msg);
-    } catch {
-      return;
-    }
-    if (typeof value !== 'number' || Number.isNaN(value)) return;
-
+    // Compute the message timestamp once so every channel from this message
+    // shares it (and the 'relative' clock advances per message, not per channel).
     let timestamp: number;
     if (timeSource === 'message') {
       timestamp = extractStampMs(parsed.msg) ?? wallNow;
@@ -128,10 +166,22 @@ export function createRosbridgeAdapter(options: RosbridgeAdapterOptions): Altara
       timestamp = wallNow;
     }
 
-    const sample: TelemetryValue = { value, timestamp };
-    history.push(sample);
-    if (history.length > bufferSize) history.splice(0, history.length - bufferSize);
-    for (const cb of subscribers) cb(sample);
+    for (const name of channelNames) {
+      const st = channels[name]!;
+      let value: number;
+      try {
+        value = st.extract(parsed.msg);
+      } catch {
+        continue; // one bad channel doesn't drop the others
+      }
+      if (typeof value !== 'number' || Number.isNaN(value)) continue;
+      const sample: TelemetryValue = { value, timestamp };
+      st.history.push(sample);
+      if (st.history.length > bufferSize) {
+        st.history.splice(0, st.history.length - bufferSize);
+      }
+      for (const cb of st.subscribers) cb(sample);
+    }
   };
 
   const connect = () => {
@@ -177,36 +227,85 @@ export function createRosbridgeAdapter(options: RosbridgeAdapterOptions): Altara
     reconnectTimer = setTimeout(connect, delay);
   };
 
+  const teardown = () => {
+    if (destroyed) return;
+    destroyed = true;
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+    const sock = socket;
+    socket = null;
+    if (sock && (sock.readyState === SocketCtor.OPEN || sock.readyState === SocketCtor.CONNECTING)) {
+      try {
+        sock.send(JSON.stringify({ op: 'unsubscribe', topic }));
+      } catch {
+        // socket may have died mid-call; ignore
+      }
+      sock.close();
+    }
+    for (const name of channelNames) channels[name]!.subscribers.clear();
+    setStatus('disconnected');
+  };
+
   connect();
 
-  return {
-    subscribe(cb) {
-      subscribers.add(cb);
-      return () => subscribers.delete(cb);
-    },
-    getHistory: () => history.slice(),
-    get status() {
-      return status;
-    },
-    destroy() {
-      if (destroyed) return;
-      destroyed = true;
-      if (reconnectTimer !== null) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-      }
-      const sock = socket;
-      socket = null;
-      if (sock && (sock.readyState === SocketCtor.OPEN || sock.readyState === SocketCtor.CONNECTING)) {
-        try {
-          sock.send(JSON.stringify({ op: 'unsubscribe', topic }));
-        } catch {
-          // socket may have died mid-call; ignore
-        }
-        sock.close();
-      }
-      subscribers.clear();
-      setStatus('disconnected');
-    },
-  };
+  const result: Record<string, AltaraDataSource> = {};
+  for (const name of channelNames) {
+    const st = channels[name]!;
+    result[name] = {
+      subscribe(cb) {
+        st.subscribers.add(cb);
+        return () => {
+          st.subscribers.delete(cb);
+        };
+      },
+      getHistory: () => st.history.slice(),
+      get status() {
+        return status;
+      },
+      destroy() {
+        if (!live.has(name)) return;
+        live.delete(name);
+        st.subscribers.clear();
+        // Tear the shared socket down only when the last channel is released.
+        if (live.size === 0) teardown();
+      },
+    };
+  }
+  return result;
+}
+
+const SINGLE = '__value__';
+
+/**
+ * Implements `AltaraDataSource` over a rosbridge_suite WebSocket. Sends a
+ * `subscribe` op on connect and pushes each inbound message through the
+ * caller's extractor(s).
+ *
+ * - Pass `valueExtractor` for a single numeric channel → returns one `AltaraDataSource`.
+ * - Pass `channels` (a `{ name: extractor }` map) for several numbers off one
+ *   socket → returns `{ [name]: AltaraDataSource }`. Feed those into
+ *   `mergeChannels` to drive a multi-input component such as `PrimaryFlightDisplay`.
+ */
+export function createRosbridgeAdapter(options: RosbridgeAdapterOptions): AltaraDataSource;
+export function createRosbridgeAdapter<C extends ChannelExtractors>(
+  options: RosbridgeChannelAdapterOptions<C>,
+): { [K in keyof C]: AltaraDataSource };
+export function createRosbridgeAdapter(
+  options: RosbridgeAdapterOptions | RosbridgeChannelAdapterOptions<ChannelExtractors>,
+): AltaraDataSource | Record<string, AltaraDataSource> {
+  if ('channels' in options && options.channels) {
+    const names = Object.keys(options.channels);
+    if (names.length === 0) {
+      throw new Error('createRosbridgeAdapter: `channels` must define at least one channel');
+    }
+    return createConnection(options, options.channels);
+  }
+  if (typeof (options as RosbridgeAdapterOptions).valueExtractor !== 'function') {
+    throw new Error('createRosbridgeAdapter: provide either `valueExtractor` or `channels`');
+  }
+  return createConnection(options, {
+    [SINGLE]: (options as RosbridgeAdapterOptions).valueExtractor,
+  })[SINGLE]!;
 }

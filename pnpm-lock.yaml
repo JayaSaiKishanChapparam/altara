@@ -59,6 +59,9 @@ importers:
       '@altara/industrial':
         specifier: workspace:*
         version: link:../../packages/industrial
+      '@altara/ros':
+        specifier: workspace:*
+        version: link:../../packages/ros
       react:
         specifier: ^18.3.0
         version: 18.3.1

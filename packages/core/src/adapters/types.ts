@@ -194,8 +194,14 @@ export interface GaugeProps {
   thresholds?: Threshold[];
   /** Pixel size: `'sm'` 120, `'md'` 180, `'lg'` 240. Default: `'md'`. */
   size?: 'sm' | 'md' | 'lg';
-  /** Animate the needle through the range with a built-in sine wave. */
+  /** Animate the needle through the range with built-in mock data. */
   mockMode?: boolean;
+  /**
+   * Shape of the `mockMode` animation. `'sine'` (default) sweeps the needle
+   * back and forth across the range; `'ramp'` drains monotonically from `max`
+   * to `min` and resets — closer to a real draining battery for demos.
+   */
+  mockProfile?: 'sine' | 'ramp';
   /** CSS class applied to the root element. */
   className?: string;
 }

@@ -67,6 +67,7 @@ export function Gauge({
   thresholds,
   size = 'md',
   mockMode,
+  mockProfile = 'sine',
   className,
 }: GaugeProps) {
   const [value, setValue] = useState<number>(() => (min + max) / 2);
@@ -92,18 +93,25 @@ export function Gauge({
     };
   }, [dataSource]);
 
-  // mockMode: animate needle back-and-forth across the full range.
+  // mockMode: animate the needle with the chosen profile.
   useEffect(() => {
     if (!mockMode || dataSource) return;
     const amp = (max - min) / 2;
     const center = (min + max) / 2;
     const gen = sineWave(0.25, amp);
+    // 'ramp': monotonic drain from max → min over RAMP_MS, then resets.
+    const RAMP_MS = 20_000;
     const id = setInterval(() => {
-      setValue(center + gen(performance.now()));
+      if (mockProfile === 'ramp') {
+        const t = (performance.now() % RAMP_MS) / RAMP_MS; // 0..1
+        setValue(max - t * (max - min));
+      } else {
+        setValue(center + gen(performance.now()));
+      }
       setHasValue(true);
     }, 50);
     return () => clearInterval(id);
-  }, [mockMode, dataSource, min, max]);
+  }, [mockMode, mockProfile, dataSource, min, max]);
 
   const sizePx = SIZE_PX[size];
   const angle = valueToAngle(value, min, max);

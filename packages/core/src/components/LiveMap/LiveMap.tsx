@@ -52,6 +52,18 @@ function circlePathPositions(
   return [[center[0] + dLat * Math.sin(t), center[1] + dLng * Math.cos(t)]];
 }
 
+/** Initial great-circle bearing from `a` to `b`, in degrees CW from north. */
+function bearing(a: [number, number], b: [number, number]): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const phi1 = toRad(a[0]);
+  const phi2 = toRad(b[0]);
+  const dLambda = toRad(b[1] - a[1]);
+  const y = Math.sin(dLambda) * Math.cos(phi2);
+  const x =
+    Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLambda);
+  return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+}
+
 interface AutoFollowProps {
   position: [number, number] | null;
   follow: boolean;
@@ -87,6 +99,8 @@ export function LiveMap({
   const [currentPosition, setCurrentPosition] = useState<[number, number] | null>(
     positionProp ? [positionProp.lat, positionProp.lng] : null,
   );
+  // Heading the mockMode orbit is currently flying (tangent to the circle).
+  const [mockHeading, setMockHeading] = useState(0);
 
   // Lazy load Leaflet when first mounted in a browser.
   useEffect(() => {
@@ -126,6 +140,9 @@ export function LiveMap({
     const center: [number, number] = [37.7749, -122.4194];
     const id = setInterval(() => {
       const [next] = circlePathPositions(center, 120, 0.4);
+      const prev = trackRef.current[trackRef.current.length - 1];
+      // Point the nose along the direction of travel so the marker turns.
+      if (prev) setMockHeading(bearing(prev, next!));
       setCurrentPosition(next!);
       trackRef.current.push(next!);
       if (trackRef.current.length > trackLength) {
@@ -135,15 +152,19 @@ export function LiveMap({
     return () => clearInterval(id);
   }, [mockMode, positionProp, trackLength]);
 
+  // In mockMode (no controlled position) the orbit drives its own heading;
+  // otherwise the caller's `heading` prop wins.
+  const effectiveHeading = mockMode && !positionProp ? mockHeading : heading;
+
   const headingIcon = useMemo(() => {
     if (!loaded) return null;
     return loaded.L.divIcon({
       className: 'vt-live-map__heading-arrow-wrapper',
-      html: `<div class="vt-live-map__heading-arrow" style="transform: rotate(${heading}deg)"></div>`,
+      html: `<div class="vt-live-map__heading-arrow" style="transform: rotate(${effectiveHeading}deg)"></div>`,
       iconSize: [16, 16],
       iconAnchor: [8, 8],
     });
-  }, [loaded, heading]);
+  }, [loaded, effectiveHeading]);
 
   // Disable auto-follow once the user manually drags the map.
   const handleDragStart = () => setFollow(false);
