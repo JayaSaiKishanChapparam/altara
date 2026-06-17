@@ -28,6 +28,7 @@ export { createMqttAdapter } from './adapters/mqtt';
 export type { MqttAdapterOptions, MqttClientLike } from './adapters/mqtt';
 export { createWorkerDataSource } from './adapters/worker';
 export type { CreateWorkerDataSourceOptions, WorkerLike } from './adapters/worker';
+export { mergeChannels } from './adapters/mergeChannels';
 
 // ── Utilities ────────────────────────────────────────────
 export { RingBuffer } from './utils/RingBuffer';

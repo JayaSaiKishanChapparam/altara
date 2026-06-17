@@ -37,9 +37,29 @@ A working dashboard with zero configuration — `mockMode` plumbs realistic synt
 
 - **Components** — `TimeSeries`, `Gauge`, `Attitude`, `SignalPanel`, `LiveMap`, `EventLog`, `ConnectionBar`, `MultiAxisPlot`, `DashboardLayout`
 - **Hooks** — `useWebSocket`, `useTelemetry`, `useRingBuffer`
-- **Adapters** — `createMqttAdapter`, `createWorkerDataSource`, `createMockDataSource`
+- **Adapters** — `createMqttAdapter`, `createWorkerDataSource`, `createMockDataSource`, `mergeChannels`
 - **Mock generators** — `sineWave`, `randomWalk`, `stepFunction`, `custom`
 - **Design tokens** — single CSS file (`@altara/core/styles.css`), dark + light themes via CSS custom properties
+
+### Driving multi-input components — `mergeChannels`
+
+`mergeChannels(sources)` unions several single-value data sources into one channel-tagged source: each key becomes the `channel` on that source's samples, so a multi-input component (like `PrimaryFlightDisplay` from `@altara/aerospace`, which routes by `roll` / `pitch` / `heading` / `airspeed` / `altitude`) can consume a single `dataSource`. `getHistory()` merges children in timestamp order, `status` is worst-of, and `destroy()` tears down every child.
+
+```ts
+import { mergeChannels } from '@altara/core';
+
+const source = mergeChannels({
+  roll: rollAdapter,   // samples tagged channel: 'roll'
+  pitch: pitchAdapter, // samples tagged channel: 'pitch'
+});
+// <PrimaryFlightDisplay dataSource={source} />
+```
+
+### Mock profiles
+
+`Gauge` takes an optional `mockProfile?: 'sine' | 'ramp'` (default `'sine'`) that's only relevant when `mockMode` is on: `'sine'` sweeps the needle back and forth, while `'ramp'` drains monotonically from max → min then resets — a believable draining-battery demo.
+
+`LiveMap`'s `mockMode` now rotates the marker's nose along its orbit (great-circle bearing along the simulated path); when you pass a controlled `position`, your `heading` prop still wins.
 
 ## Showcase
 

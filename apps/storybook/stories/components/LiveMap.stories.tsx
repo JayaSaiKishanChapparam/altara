@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useEffect, useState } from 'react';
-import { LiveMap } from '@altara/core';
-import { createNavSatFixAdapter } from '@altara/ros';
+import { LiveMap, mergeChannels } from '@altara/core';
+import { createNavSatFixAdapter, createRosbridgeAdapter } from '@altara/ros';
 
 const meta: Meta<typeof LiveMap> = {
   title: 'Components/LiveMap',
@@ -11,7 +11,7 @@ const meta: Meta<typeof LiveMap> = {
     docs: {
       description: {
         component:
-          'Map view of a moving GPS asset. Leaflet + react-leaflet are optional peer deps loaded dynamically. The polyline track grows as new positions arrive (capped by `trackLength`); auto-follow disengages when the user drags the map.',
+          'Map view of a moving GPS asset. Leaflet + react-leaflet are optional peer deps loaded dynamically. The polyline track grows as new positions arrive (capped by `trackLength`); auto-follow disengages when the user drags the map. In `mockMode` the marker turns its nose along the orbit (great-circle bearing of travel); when you pass a controlled `position`, your `heading` prop wins.',
       },
     },
   },
@@ -106,6 +106,52 @@ export const WithROS2: Story = {
         };
       }, []);
       return <LiveMap position={position} heading={0} />;
+    };
+    return <Component />;
+  },
+};
+
+// ── Story 5: ROS2 NavSatFix on a single socket (channels + mergeChannels) ─
+export const WithROS2SingleSocket: Story = {
+  name: 'With ROS2 (single socket)',
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'The tidier wiring: pull `lat`/`lng` as two channels off **one** `sensor_msgs/NavSatFix` socket via the `channels` extractor map, union them with `mergeChannels`, then accumulate into `{ lat, lng }`. Requires `rosbridge_server` on `ws://localhost:9090`.',
+      },
+    },
+  },
+  render: () => {
+    const Component = () => {
+      const [position, setPosition] = useState<{ lat: number; lng: number } | undefined>(
+        undefined,
+      );
+      useEffect(() => {
+        const gps = createRosbridgeAdapter({
+          url: 'ws://localhost:9090',
+          topic: '/mavros/global_position/global',
+          messageType: 'sensor_msgs/NavSatFix',
+          channels: {
+            lat: (m) => m.latitude,
+            lng: (m) => m.longitude,
+          },
+        });
+        const source = mergeChannels({ lat: gps.lat, lng: gps.lng });
+        const latest: { lat?: number; lng?: number } = {};
+        const off = source.subscribe((v) => {
+          if (v.channel === 'lat') latest.lat = v.value;
+          if (v.channel === 'lng') latest.lng = v.value;
+          if (latest.lat !== undefined && latest.lng !== undefined) {
+            setPosition({ lat: latest.lat, lng: latest.lng });
+          }
+        });
+        return () => {
+          off();
+          source.destroy();
+        };
+      }, []);
+      return position ? <LiveMap position={position} /> : <LiveMap />;
     };
     return <Component />;
   },
