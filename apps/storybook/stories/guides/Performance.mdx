@@ -8,15 +8,21 @@ This page is the engineering-credibility document. The choices below are the dif
 
 ## Why Canvas, not SVG
 
-SVG-based charts re-render the chart's entire React subtree on every value update. At 100 Hz+, even a modest reconciler pass costs more than the 16 ms frame budget — you see it as visible jank, dropped frames, and layout thrash on adjacent UI.
+An SVG chart driven through React re-renders the chart's subtree on every value update, so each frame pays for React reconciliation **plus** the SVG/DOM mutate + layout + paint. Both costs grow with the number of on-screen elements, and past a few hundred they blow the 16 ms budget — visible jank, dropped frames, and layout thrash on adjacent UI.
 
-Altara's `TimeSeries`, `MultiAxisPlot`, `Gauge`, and `Attitude` write directly to a Canvas via `requestAnimationFrame`. The hot path runs **outside** React entirely:
+This is measured, not assumed. The benchmark in `scripts/bench/` (`apps/demo/bench/`) renders N telemetry widgets three ways — React-driven SVG, imperative SVG (one shared rAF, mutate by ref, no React), and Canvas — and on a desktop i9 / Chromium at 60 fps:
+
+- **React-driven SVG** starts dropping frames around **N ≈ 300** widgets, and by **N ≈ 50** once the CPU is throttled to mid-tier-laptop speed.
+- **Imperative SVG** roughly doubles that headroom (drops ≈ N ≈ 600) — so about half of React-driven SVG's per-frame cost is React reconciliation, not SVG.
+- **Canvas** keeps per-frame main-thread work ~10× lower than imperative SVG (≈ 1 ms vs ≈ 5 ms at N = 200) and holds 60 fps furthest, including N = 200 on throttled hardware where both SVG paths fail.
+
+So Canvas is the default for the **high-frequency** charts — `TimeSeries`, `MultiAxisPlot`, `Attitude` — which write directly to a Canvas via `requestAnimationFrame`:
 
 ```
 sample arrives  →  push into RingBuffer (no setState)  →  next rAF tick reads buffer + paints
 ```
 
-React state is reserved for UI concerns: connection status, channel config, themes. The hot path stays untouched.
+Lower-frequency widgets don't need it: `Gauge` is SVG (a single needle updated via React state is cheap), and the numeric `SignalPanel` is plain DOM. Match the tool to the update frequency. React state is reserved for UI concerns — connection status, channel config, themes — and stays out of the chart hot paths.
 
 ## RingBuffer — bounded memory, fast reads
 
@@ -28,16 +34,27 @@ Altara stores telemetry in a `RingBuffer`:
 - Fixed capacity — overwrites oldest sample once full.
 - `getValues()` / `getTimes()` return ordered slices in O(capacity).
 
-You never have to construct one yourself for the built-in components, but if you build a custom visualization on top of `useTelemetry`, the buffer is exposed:
+### Reading without allocating
+
+`getValues()` / `getTimes()` each **allocate a fresh `Float64Array`** per call — convenient, but not free in a 60 fps loop. Keeping React out of the hot path (no `setState` per sample) removes reconciliation, but it does **not** by itself make the loop allocation-free: a chart that calls `getValues()`/`getTimes()` for an extent pass and again for a draw pass churns ~4 arrays per channel per frame.
+
+How much that matters is load-dependent, and the benchmark measures it (`MODE=alloc` in `scripts/bench/`). On a desktop i9, even 96 such allocations per frame (24 channels × full 10k buffers) never drops a frame — V8's generational GC absorbs the short-lived arrays — but it does produce GC pauses up to ~15 ms that eat into the frame's headroom, and once the CPU is throttled to mid-tier speed those pauses turn into **dropped frames** (hundreds over 30 s) that the allocation-free path avoids entirely.
+
+So for the hot path, read into a reused buffer with `readInto()` / `readTimesInto()`, which fill a caller-owned `Float64Array` and allocate nothing — this is what `TimeSeries` and `MultiAxisPlot` do internally:
 
 ```tsx
 import { useTelemetry } from '@altara/core';
 
 function CustomChart({ source }) {
   const { buffer } = useTelemetry(source, 10_000);
-  // buffer.getValues() / buffer.getTimes() inside your rAF loop
+  const scratch = useRef(new Float64Array(10_000)).current;
+  // inside your rAF loop — zero allocation per frame:
+  //   const n = buffer.readInto(scratch);
+  //   for (let i = 0; i < n; i++) { /* read scratch[i] */ }
 }
 ```
+
+`getValues()` / `getTimes()` stay as the convenient choice for one-off, non-hot-path reads.
 
 ## `windowMs` vs `bufferSize`
 

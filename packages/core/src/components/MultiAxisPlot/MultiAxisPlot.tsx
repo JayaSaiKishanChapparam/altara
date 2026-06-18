@@ -38,16 +38,26 @@ interface AxisExtent {
   max: number;
 }
 
-function computeExtent(states: ChannelState[], axis: 'left' | 'right', tMin: number): AxisExtent {
+interface ChannelScratch {
+  values: Float64Array;
+  times: Float64Array;
+  len: number;
+}
+
+function computeExtent(
+  states: ChannelState[],
+  scratch: ChannelScratch[],
+  axis: 'left' | 'right',
+  tMin: number,
+): AxisExtent {
   let yMin = Infinity;
   let yMax = -Infinity;
-  for (const cs of states) {
-    if (cs.axis !== axis) continue;
-    const values = cs.buffer.getValues();
-    const times = cs.buffer.getTimes();
-    for (let i = 0; i < values.length; i++) {
-      if (times[i]! < tMin) continue;
-      const v = values[i]!;
+  for (let c = 0; c < states.length; c++) {
+    if (states[c]!.axis !== axis) continue;
+    const s = scratch[c]!;
+    for (let i = 0; i < s.len; i++) {
+      if (s.times[i]! < tMin) continue;
+      const v = s.values[i]!;
       if (v < yMin) yMin = v;
       if (v > yMax) yMax = v;
     }
@@ -134,6 +144,16 @@ export function MultiAxisPlot({
 
     const frameInterval = 1000 / Math.max(fps, 1);
 
+    // Reusable per-channel scratch buffers: read each ring buffer once per frame
+    // into these (zero-allocation) and feed both axis-extent and draw passes
+    // from the same snapshot, instead of getValues()/getTimes() allocating
+    // fresh Float64Arrays per read (blueprint §13: GC-induced jank).
+    const scratch: ChannelScratch[] = channelStates.map(() => ({
+      values: new Float64Array(bufferSize),
+      times: new Float64Array(bufferSize),
+      len: 0,
+    }));
+
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const cssWidth = container.clientWidth;
@@ -171,8 +191,15 @@ export function MultiAxisPlot({
       const wallNow = Date.now();
       const tMin = wallNow - windowMs;
 
-      const left = computeExtent(channelStates, 'left', tMin);
-      const right = computeExtent(channelStates, 'right', tMin);
+      // Single read per channel per frame, shared by both axes and the draw pass.
+      for (let c = 0; c < channelStates.length; c++) {
+        const s = scratch[c]!;
+        s.len = channelStates[c]!.buffer.readInto(s.values);
+        channelStates[c]!.buffer.readTimesInto(s.times);
+      }
+
+      const left = computeExtent(channelStates, scratch, 'left', tMin);
+      const right = computeExtent(channelStates, scratch, 'right', tMin);
 
       const xFor = (t: number) => padLeft + ((t - tMin) / windowMs) * plotW;
       const yFor = (v: number, axis: 'left' | 'right') => {
@@ -244,19 +271,19 @@ export function MultiAxisPlot({
       }
 
       // Channel lines.
-      for (const cs of channelStates) {
-        const values = cs.buffer.getValues();
-        const times = cs.buffer.getTimes();
-        if (values.length === 0) continue;
+      for (let c = 0; c < channelStates.length; c++) {
+        const cs = channelStates[c]!;
+        const s = scratch[c]!;
+        if (s.len === 0) continue;
         ctx.strokeStyle = cs.color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         let started = false;
-        for (let i = 0; i < values.length; i++) {
-          const t = times[i]!;
+        for (let i = 0; i < s.len; i++) {
+          const t = s.times[i]!;
           if (t < tMin) continue;
           const x = xFor(t);
-          const y = yFor(values[i]!, cs.axis);
+          const y = yFor(s.values[i]!, cs.axis);
           if (!started) {
             ctx.moveTo(x, y);
             started = true;
@@ -291,6 +318,9 @@ export function MultiAxisPlot({
       rafRef.current = null;
       ro.disconnect();
     };
+    // bufferSize is fixed for the component lifetime (see channelStates memo);
+    // the scratch buffers are sized once at mount and intentionally not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelStates, windowMs, fps, leftAxisLabel, rightAxisLabel, thresholds]);
 
   const ariaLabel = channelStates.map((cs) => cs.channel.label).join(', ');

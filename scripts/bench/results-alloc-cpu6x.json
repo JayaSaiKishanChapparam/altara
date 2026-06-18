@@ -1,0 +1,101 @@
+{
+  "takenAt": "2026-06-18T19:55:29.063Z",
+  "machine": {
+    "platform": "Darwin 25.3.0 (x64)",
+    "cpu": "Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz",
+    "cores": 16,
+    "memGB": 16
+  },
+  "browser": {
+    "name": "chromium",
+    "version": "147.0.7727.15",
+    "headless": false,
+    "cpuThrottle": 6,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 2,
+    "stageWidthCss": 1440
+  },
+  "config": {
+    "mode": "alloc",
+    "channelsList": [
+      6,
+      24
+    ],
+    "bufferSize": 10000,
+    "durationMs": 30000
+  },
+  "results": [
+    {
+      "mode": "alloc-copy",
+      "channels": 6,
+      "bufferSize": 10000,
+      "allocPerFrame": 24,
+      "frames": 1747,
+      "durationMs": 29484,
+      "p50FrameMs": 16.7,
+      "p99FrameMs": 17.7,
+      "maxFrameMs": 50.3,
+      "workP50Ms": 4.7,
+      "workP99Ms": 14.3,
+      "workMaxMs": 64.1,
+      "workSpikes5": 518,
+      "longFrames25": 16,
+      "longFrames50": 1
+    },
+    {
+      "mode": "alloc-reuse",
+      "channels": 6,
+      "bufferSize": 10000,
+      "allocPerFrame": 0,
+      "frames": 1770,
+      "durationMs": 29501,
+      "p50FrameMs": 16.7,
+      "p99FrameMs": 17.6,
+      "maxFrameMs": 17.8,
+      "workP50Ms": 3,
+      "workP99Ms": 4.5,
+      "workMaxMs": 5.3,
+      "workSpikes5": 6,
+      "longFrames25": 0,
+      "longFrames50": 0
+    },
+    {
+      "mode": "alloc-copy",
+      "channels": 24,
+      "bufferSize": 10000,
+      "allocPerFrame": 96,
+      "frames": 1304,
+      "durationMs": 29435,
+      "p50FrameMs": 16.8,
+      "p99FrameMs": 66.7,
+      "maxFrameMs": 100.3,
+      "workP50Ms": 20.6,
+      "workP99Ms": 61.5,
+      "workMaxMs": 89.6,
+      "workSpikes5": 1303,
+      "longFrames25": 363,
+      "longFrames50": 46
+    },
+    {
+      "mode": "alloc-reuse",
+      "channels": 24,
+      "bufferSize": 10000,
+      "allocPerFrame": 0,
+      "frames": 1770,
+      "durationMs": 29501,
+      "p50FrameMs": 16.7,
+      "p99FrameMs": 17.6,
+      "maxFrameMs": 17.7,
+      "workP50Ms": 7.9,
+      "workP99Ms": 15.1,
+      "workMaxMs": 18.9,
+      "workSpikes5": 1764,
+      "longFrames25": 0,
+      "longFrames50": 0
+    }
+  ]
+}

@@ -38,6 +38,22 @@ export class RingBuffer {
     return this.orderedCopy(this.times);
   }
 
+  /**
+   * Zero-copy ordered read of values into a caller-owned buffer (oldest →
+   * newest). Fills `out[0..count)` and returns the count. Unlike getValues(),
+   * this allocates nothing — the rAF render path reuses one Float64Array across
+   * frames instead of producing a fresh array every read. Throws if `out` is
+   * smaller than the current length.
+   */
+  readInto(out: Float64Array): number {
+    return this.orderedInto(this.buf, out);
+  }
+
+  /** Zero-copy ordered read of timestamps. See readInto(). */
+  readTimesInto(out: Float64Array): number {
+    return this.orderedInto(this.times, out);
+  }
+
   /** Most recent sample, or undefined if empty. */
   last(): { value: number; timestamp: number } | undefined {
     if (this.count === 0) return undefined;
@@ -56,17 +72,27 @@ export class RingBuffer {
 
   private orderedCopy(source: Float64Array): Float64Array {
     const out = new Float64Array(this.count);
-    if (this.count === 0) return out;
+    this.orderedInto(source, out);
+    return out;
+  }
+
+  private orderedInto(source: Float64Array, out: Float64Array): number {
+    if (out.length < this.count) {
+      throw new RangeError(
+        `readInto target too small: need ${this.count}, got ${out.length}`,
+      );
+    }
+    if (this.count === 0) return 0;
     if (this.count < this.capacity) {
       // Buffer not yet full: oldest is at index 0, newest is at head-1.
       out.set(source.subarray(0, this.count));
-      return out;
+      return this.count;
     }
     // Full: oldest sits at head, wrapping forward to head-1.
     const tail = source.subarray(this.head, this.capacity);
     const wrap = source.subarray(0, this.head);
     out.set(tail, 0);
     out.set(wrap, tail.length);
-    return out;
+    return this.count;
   }
 }
