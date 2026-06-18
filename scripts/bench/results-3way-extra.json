@@ -1,0 +1,159 @@
+{
+  "takenAt": "2026-06-18T20:58:26.942Z",
+  "machine": {
+    "platform": "Darwin 25.3.0 (x64)",
+    "cpu": "Intel(R) Core(TM) i9-9880H CPU @ 2.30GHz",
+    "cores": 16,
+    "memGB": 16
+  },
+  "browser": {
+    "name": "chromium",
+    "version": "147.0.7727.15",
+    "headless": false,
+    "cpuThrottle": 1,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36"
+  },
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "deviceScaleFactor": 2,
+    "stageWidthCss": 1440
+  },
+  "config": {
+    "mode": "render",
+    "ns": [
+      100,
+      1000,
+      1200
+    ],
+    "durationMs": 4000
+  },
+  "results": [
+    {
+      "mode": "svg-react",
+      "n": 100,
+      "frames": 207,
+      "durationMs": 3452,
+      "achievedFps": 60,
+      "meanFrameMs": 16.67,
+      "p95FrameMs": 17.5,
+      "maxFrameMs": 17.7,
+      "droppedFrames": 0,
+      "jankPct": 0,
+      "meanWorkMs": 5.82,
+      "p95WorkMs": 7.2
+    },
+    {
+      "mode": "svg-react",
+      "n": 1000,
+      "frames": 28,
+      "durationMs": 1948,
+      "achievedFps": 14.4,
+      "meanFrameMs": 69.59,
+      "p95FrameMs": 83.6,
+      "maxFrameMs": 83.7,
+      "droppedFrames": 28,
+      "jankPct": 100,
+      "meanWorkMs": 56.6,
+      "p95WorkMs": 65.8
+    },
+    {
+      "mode": "svg-react",
+      "n": 1200,
+      "frames": 18,
+      "durationMs": 1433,
+      "achievedFps": 12.6,
+      "meanFrameMs": 79.58,
+      "p95FrameMs": 100.6,
+      "maxFrameMs": 100.6,
+      "droppedFrames": 18,
+      "jankPct": 100,
+      "meanWorkMs": 63.98,
+      "p95WorkMs": 83.1
+    },
+    {
+      "mode": "svg-imperative",
+      "n": 100,
+      "frames": 210,
+      "durationMs": 3502,
+      "achievedFps": 60,
+      "meanFrameMs": 16.67,
+      "p95FrameMs": 17.5,
+      "maxFrameMs": 17.7,
+      "droppedFrames": 0,
+      "jankPct": 0,
+      "meanWorkMs": 2.91,
+      "p95WorkMs": 3.3
+    },
+    {
+      "mode": "svg-imperative",
+      "n": 1000,
+      "frames": 75,
+      "durationMs": 2850,
+      "achievedFps": 26.3,
+      "meanFrameMs": 38,
+      "p95FrameMs": 50.7,
+      "maxFrameMs": 51,
+      "droppedFrames": 75,
+      "jankPct": 100,
+      "meanWorkMs": 25.22,
+      "p95WorkMs": 30.1
+    },
+    {
+      "mode": "svg-imperative",
+      "n": 1200,
+      "frames": 60,
+      "durationMs": 2684,
+      "achievedFps": 22.4,
+      "meanFrameMs": 44.73,
+      "p95FrameMs": 50.5,
+      "maxFrameMs": 67.3,
+      "droppedFrames": 60,
+      "jankPct": 100,
+      "meanWorkMs": 29.68,
+      "p95WorkMs": 35.9
+    },
+    {
+      "mode": "canvas",
+      "n": 100,
+      "frames": 211,
+      "durationMs": 3516,
+      "achievedFps": 60,
+      "meanFrameMs": 16.66,
+      "p95FrameMs": 17.4,
+      "maxFrameMs": 17.7,
+      "droppedFrames": 0,
+      "jankPct": 0,
+      "meanWorkMs": 0.64,
+      "p95WorkMs": 0.8
+    },
+    {
+      "mode": "canvas",
+      "n": 1000,
+      "frames": 103,
+      "durationMs": 3167,
+      "achievedFps": 32.5,
+      "meanFrameMs": 30.74,
+      "p95FrameMs": 34.3,
+      "maxFrameMs": 50.4,
+      "droppedFrames": 83,
+      "jankPct": 0,
+      "meanWorkMs": 3.48,
+      "p95WorkMs": 4.3
+    },
+    {
+      "mode": "canvas",
+      "n": 1200,
+      "frames": 84,
+      "durationMs": 2984,
+      "achievedFps": 28.2,
+      "meanFrameMs": 35.52,
+      "p95FrameMs": 50.1,
+      "maxFrameMs": 50.3,
+      "droppedFrames": 83,
+      "jankPct": 0,
+      "meanWorkMs": 4.12,
+      "p95WorkMs": 5.3
+    }
+  ]
+}
