@@ -126,6 +126,16 @@ export function TimeSeries({
 
     const frameInterval = 1000 / Math.max(fps, 1);
 
+    // Reusable per-channel scratch buffers. The ring buffers are read once per
+    // frame into these instead of allocating a fresh Float64Array per read —
+    // getValues()/getTimes() allocate, readInto() does not, so the hot path
+    // stays zero-allocation (blueprint §13: GC-induced jank).
+    const scratch = channelStates.map(() => ({
+      values: new Float64Array(bufferSize),
+      times: new Float64Array(bufferSize),
+      len: 0,
+    }));
+
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       const cssWidth = container.clientWidth;
@@ -165,15 +175,21 @@ export function TimeSeries({
       const wallNow = Date.now();
       const tMin = wallNow - windowMs;
 
+      // Single read per channel per frame — feeds both the extent pass and the
+      // draw pass below from the same snapshot, with zero allocation.
+      for (let c = 0; c < channelStates.length; c++) {
+        const s = scratch[c]!;
+        s.len = channelStates[c]!.buffer.readInto(s.values);
+        channelStates[c]!.buffer.readTimesInto(s.times);
+      }
+
       // Find y-extent across all channels in the visible window.
       let yMin = Infinity;
       let yMax = -Infinity;
-      for (const cs of channelStates) {
-        const values = cs.buffer.getValues();
-        const times = cs.buffer.getTimes();
-        for (let i = 0; i < values.length; i++) {
-          if (times[i]! < tMin) continue;
-          const v = values[i]!;
+      for (const s of scratch) {
+        for (let i = 0; i < s.len; i++) {
+          if (s.times[i]! < tMin) continue;
+          const v = s.values[i]!;
           if (v < yMin) yMin = v;
           if (v > yMax) yMax = v;
         }
@@ -248,19 +264,19 @@ export function TimeSeries({
       }
 
       // Channels.
-      for (const cs of channelStates) {
-        const values = cs.buffer.getValues();
-        const times = cs.buffer.getTimes();
-        if (values.length === 0) continue;
+      for (let c = 0; c < channelStates.length; c++) {
+        const cs = channelStates[c]!;
+        const s = scratch[c]!;
+        if (s.len === 0) continue;
         ctx.strokeStyle = cs.color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         let started = false;
-        for (let i = 0; i < values.length; i++) {
-          const t = times[i]!;
+        for (let i = 0; i < s.len; i++) {
+          const t = s.times[i]!;
           if (t < tMin) continue;
           const x = xFor(t);
-          const y = yFor(values[i]!);
+          const y = yFor(s.values[i]!);
           if (!started) {
             ctx.moveTo(x, y);
             started = true;
@@ -294,6 +310,9 @@ export function TimeSeries({
       rafRef.current = null;
       ro.disconnect();
     };
+    // bufferSize is fixed for the component lifetime (see channelStates memo);
+    // the scratch buffers are sized once at mount and intentionally not a dep.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelStates, windowMs, thresholds, fps]);
 
   const ariaLabel = channelStates.map((cs) => cs.channel.label).join(', ') || 'time series';
