@@ -5,26 +5,44 @@ import { PrimaryFlightDisplay } from '@altara/aerospace';
 
 /**
  * Drone GCS panel — PFD + moving map + battery + event log, the four-up layout
- * the dev.to article builds. Everything runs on mockMode so the page is alive
- * with no drone attached. The real MAVROS wiring (rosbridge) is shown verbatim
- * in the commented block below and compile-checked in src/examples/gcs-wiring.tsx.
+ * the dev.to article builds. Everything here runs on mockMode so the page is
+ * alive with no drone attached.
  *
+ * The real MAVROS wiring is the `LivePrimaryFlightDisplay` function in
+ * src/examples/gcs-wiring.tsx — compile-checked by `tsc -b`, and quoted VERBATIM
+ * below so the demo, the fixture, and the article stay byte-identical. If you
+ * edit one, edit all three (the fixture is the source of truth):
+ *
+ *   import { useEffect, useMemo } from 'react';
+ *   import { PrimaryFlightDisplay } from '@altara/aerospace';
  *   import { createImuAdapter, createRosbridgeAdapter, mergeChannels } from '@altara/ros';
  *
- *   const imu = createImuAdapter({ url, topic: '/mavros/imu/data' });           // roll, pitch
- *   const hud = createRosbridgeAdapter({
- *     url, topic: '/mavros/vfr_hud', messageType: 'mavros_msgs/VFR_HUD',
- *     channels: {
- *       heading:  m => m.heading,
- *       airspeed: m => m.airspeed * 1.94384, // m/s -> kt
- *       altitude: m => m.altitude * 3.28084, // m -> ft
- *     },
- *   });
- *   const source = mergeChannels({
- *     roll: imu.roll, pitch: imu.pitch,
- *     heading: hud.heading, airspeed: hud.airspeed, altitude: hud.altitude,
- *   });
- *   // <PrimaryFlightDisplay dataSource={source} showFlightDirector />
+ * export function LivePrimaryFlightDisplay({ url }: { url: string }) {
+ *   const source = useMemo(() => {
+ *     const imu = createImuAdapter({ url, topic: '/mavros/imu/data' });
+ *     const hud = createRosbridgeAdapter({
+ *       url,
+ *       topic: '/mavros/vfr_hud',
+ *       messageType: 'mavros_msgs/VFR_HUD',
+ *       channels: {
+ *         heading: (m) => m.heading,
+ *         airspeed: (m) => m.airspeed * 1.94384, // m/s -> kt
+ *         altitude: (m) => m.altitude * 3.28084, // m -> ft
+ *       },
+ *     });
+ *     return mergeChannels({
+ *       roll: imu.roll,
+ *       pitch: imu.pitch,
+ *       heading: hud.heading,
+ *       airspeed: hud.airspeed,
+ *       altitude: hud.altitude,
+ *     });
+ *   }, [url]);
+ *
+ *   useEffect(() => () => source.destroy(), [source]);
+ *
+ *   return <PrimaryFlightDisplay dataSource={source} showFlightDirector />;
+ * }
  */
 
 const GCS_EVENTS: EventLogEntry[] = [
