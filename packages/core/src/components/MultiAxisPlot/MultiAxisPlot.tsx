@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type {
-  MultiAxisChannel,
-  MultiAxisPlotProps,
-  TelemetryValue,
-} from '../../adapters/types';
+import type { MultiAxisChannel, MultiAxisPlotProps, TelemetryValue } from '../../adapters/types';
 import { RingBuffer } from '../../utils/RingBuffer';
+import { buildMinMaxBuckets, countVisibleSamples } from '../../utils/minMaxDecimation';
 import { sineWave } from '../../utils/mockData';
 
 interface ChannelState {
@@ -41,6 +38,10 @@ interface AxisExtent {
 interface ChannelScratch {
   values: Float64Array;
   times: Float64Array;
+  bucketMinY: Float64Array;
+  bucketMaxY: Float64Array;
+  bucketSeen: Uint8Array;
+  bucketTouched: Uint32Array;
   len: number;
 }
 
@@ -127,10 +128,13 @@ export function MultiAxisPlot({
     const generators = channelStates.map((cs, i) =>
       sineWave(0.2 + i * 0.1, cs.axis === 'right' ? 0.8 + i * 0.2 : 30 + i * 10),
     );
-    const id = setInterval(() => {
-      const t = Date.now();
-      channelStates.forEach((cs, i) => cs.buffer.push(generators[i]!(t), t));
-    }, 1000 / Math.max(fps, 30));
+    const id = setInterval(
+      () => {
+        const t = Date.now();
+        channelStates.forEach((cs, i) => cs.buffer.push(generators[i]!(t), t));
+      },
+      1000 / Math.max(fps, 30),
+    );
     return () => clearInterval(id);
   }, [mockMode, dataSource, channelStates, fps]);
 
@@ -151,6 +155,10 @@ export function MultiAxisPlot({
     const scratch: ChannelScratch[] = channelStates.map(() => ({
       values: new Float64Array(bufferSize),
       times: new Float64Array(bufferSize),
+      bucketMinY: new Float64Array(bufferSize),
+      bucketMaxY: new Float64Array(bufferSize),
+      bucketSeen: new Uint8Array(bufferSize),
+      bucketTouched: new Uint32Array(bufferSize),
       len: 0,
     }));
 
@@ -278,20 +286,47 @@ export function MultiAxisPlot({
         ctx.strokeStyle = cs.color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        let started = false;
-        for (let i = 0; i < s.len; i++) {
-          const t = s.times[i]!;
-          if (t < tMin) continue;
-          const x = xFor(t);
-          const y = yFor(s.values[i]!, cs.axis);
-          if (!started) {
-            ctx.moveTo(x, y);
-            started = true;
-          } else {
-            ctx.lineTo(x, y);
+        const visibleCount = countVisibleSamples(s.times, s.len, tMin);
+        if (visibleCount > Math.ceil(plotW)) {
+          const touchedCount = buildMinMaxBuckets(
+            s.values,
+            s.times,
+            s.len,
+            tMin,
+            windowMs,
+            plotW,
+            padLeft,
+            (value) => yFor(value, cs.axis),
+            {
+              minY: s.bucketMinY,
+              maxY: s.bucketMaxY,
+              seen: s.bucketSeen,
+              touched: s.bucketTouched,
+            },
+          );
+          for (let i = 0; i < touchedCount; i++) {
+            const bucket = s.bucketTouched[i]!;
+            const x = padLeft + bucket + 0.5;
+            ctx.moveTo(x, s.bucketMinY[bucket]!);
+            ctx.lineTo(x, s.bucketMaxY[bucket]!);
           }
+          ctx.stroke();
+        } else {
+          let started = false;
+          for (let i = 0; i < s.len; i++) {
+            const t = s.times[i]!;
+            if (t < tMin) continue;
+            const x = xFor(t);
+            const y = yFor(s.values[i]!, cs.axis);
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          if (started) ctx.stroke();
         }
-        if (started) ctx.stroke();
       }
 
       // Legend with axis tag.
