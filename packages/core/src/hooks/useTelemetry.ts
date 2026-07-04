@@ -27,13 +27,14 @@ export function useTelemetry(
 ): UseTelemetryResult {
   const buffer = useRingBuffer(bufferSize);
   const [latest, setLatest] = useState<TelemetryValue | null>(null);
-  const [status, setStatus] = useState<ConnectionStatus>(
-    dataSource?.status ?? 'disconnected',
-  );
+  const [status, setStatus] = useState<ConnectionStatus>(dataSource?.status ?? 'disconnected');
   const [sampleCount, setSampleCount] = useState(0);
 
   useEffect(() => {
     if (!dataSource) {
+      buffer.clear();
+      setLatest(null);
+      setSampleCount(0);
       setStatus('disconnected');
       return;
     }
