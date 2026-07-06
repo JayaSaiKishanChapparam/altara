@@ -2,12 +2,12 @@
 
 **Autonomous-vehicle React components for Altara.** Embeddable LiDAR point-cloud renderer (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, and SLAM map — for robotaxis, ADS prototypes, autonomous-shuttle dashboards, mobile-robotics monitoring, and self-driving research UIs.
 
+![LiDAR point cloud](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-lidar.gif)
+
 [![npm version](https://img.shields.io/npm/v/@altara/av?color=D946EF&label=npm)](https://www.npmjs.com/package/@altara/av)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/av?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/av)
 [![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/av)
 [![license](https://img.shields.io/npm/l/@altara/av?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
-
-![LiDAR point cloud](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-lidar.gif)
 
 ## Install
 
@@ -39,6 +39,8 @@ export function AvDashboard() {
   );
 }
 ```
+
+**See it live:** [Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)
 
 ## Components
 

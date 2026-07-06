@@ -2,12 +2,12 @@
 
 **React components for real-time telemetry dashboards.** Canvas-rendered time-series charts, gauges, attitude indicators, GPS maps, signal panels, and event logs for robotics, aerospace, autonomous-vehicle, and industrial-IoT applications — where generic charting libraries fall short.
 
+![Altara Gauge — live battery-drain telemetry](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/gauge-battery-drain.gif)
+
 [![npm version](https://img.shields.io/npm/v/@altara/core?color=1D9E75&label=npm)](https://www.npmjs.com/package/@altara/core)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/core?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/core)
 [![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/core)
 [![license](https://img.shields.io/npm/l/@altara/core?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
-
-![Altara — real-time telemetry at 60fps](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/hero.gif)
 
 ## Install
 
@@ -32,6 +32,8 @@ export function Dashboard() {
 ```
 
 A working dashboard with zero configuration — `mockMode` plumbs realistic synthetic data into every component until you swap in a real `dataSource`.
+
+**See it live:** [Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)
 
 ## What's in the package
 
