@@ -1,10 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type {
-  TelemetryValue,
-  TimeSeriesChannel,
-  TimeSeriesProps,
-} from '../../adapters/types';
+import type { TelemetryValue, TimeSeriesChannel, TimeSeriesProps } from '../../adapters/types';
 import { RingBuffer } from '../../utils/RingBuffer';
+import { buildMinMaxBuckets, countVisibleSamples } from '../../utils/minMaxDecimation';
 import { sineWave } from '../../utils/mockData';
 
 interface ChannelState {
@@ -75,9 +72,7 @@ export function TimeSeries({
   // identity across renders so the rAF loop reads from the same memory.
   const channelStates = useMemo<ChannelState[]>(() => {
     const list: TimeSeriesChannel[] =
-      channels && channels.length > 0
-        ? channels
-        : [{ key: 'default', label: 'value' }];
+      channels && channels.length > 0 ? channels : [{ key: 'default', label: 'value' }];
     return list.map((c, i) => ({
       channel: c,
       buffer: new RingBuffer(bufferSize),
@@ -108,10 +103,13 @@ export function TimeSeries({
   useEffect(() => {
     if (!mockMode || dataSource) return;
     const generators = channelStates.map((_, i) => sineWave(0.3 + i * 0.15, 30 + i * 10));
-    const id = setInterval(() => {
-      const t = Date.now();
-      channelStates.forEach((cs, i) => cs.buffer.push(generators[i]!(t), t));
-    }, 1000 / Math.max(fps, 30));
+    const id = setInterval(
+      () => {
+        const t = Date.now();
+        channelStates.forEach((cs, i) => cs.buffer.push(generators[i]!(t), t));
+      },
+      1000 / Math.max(fps, 30),
+    );
     return () => clearInterval(id);
   }, [mockMode, dataSource, channelStates, fps]);
 
@@ -133,6 +131,10 @@ export function TimeSeries({
     const scratch = channelStates.map(() => ({
       values: new Float64Array(bufferSize),
       times: new Float64Array(bufferSize),
+      bucketMinY: new Float64Array(bufferSize),
+      bucketMaxY: new Float64Array(bufferSize),
+      bucketSeen: new Uint8Array(bufferSize),
+      bucketTouched: new Uint32Array(bufferSize),
       len: 0,
     }));
 
@@ -271,20 +273,47 @@ export function TimeSeries({
         ctx.strokeStyle = cs.color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        let started = false;
-        for (let i = 0; i < s.len; i++) {
-          const t = s.times[i]!;
-          if (t < tMin) continue;
-          const x = xFor(t);
-          const y = yFor(s.values[i]!);
-          if (!started) {
-            ctx.moveTo(x, y);
-            started = true;
-          } else {
-            ctx.lineTo(x, y);
+        const visibleCount = countVisibleSamples(s.times, s.len, tMin);
+        if (visibleCount > Math.ceil(plotW)) {
+          const touchedCount = buildMinMaxBuckets(
+            s.values,
+            s.times,
+            s.len,
+            tMin,
+            windowMs,
+            plotW,
+            padLeft,
+            yFor,
+            {
+              minY: s.bucketMinY,
+              maxY: s.bucketMaxY,
+              seen: s.bucketSeen,
+              touched: s.bucketTouched,
+            },
+          );
+          for (let i = 0; i < touchedCount; i++) {
+            const bucket = s.bucketTouched[i]!;
+            const x = padLeft + bucket + 0.5;
+            ctx.moveTo(x, s.bucketMinY[bucket]!);
+            ctx.lineTo(x, s.bucketMaxY[bucket]!);
           }
+          ctx.stroke();
+        } else {
+          let started = false;
+          for (let i = 0; i < s.len; i++) {
+            const t = s.times[i]!;
+            if (t < tMin) continue;
+            const x = xFor(t);
+            const y = yFor(s.values[i]!);
+            if (!started) {
+              ctx.moveTo(x, y);
+              started = true;
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          if (started) ctx.stroke();
         }
-        if (started) ctx.stroke();
       }
 
       // Channel legend (top-right).
