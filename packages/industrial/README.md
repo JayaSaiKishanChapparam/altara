@@ -2,12 +2,12 @@
 
 **Industrial / SCADA / HMI React components for Altara.** Embeddable waterfall spectrogram (FFT + Canvas), OEE dashboard, PID tuning panel, alarm annunciator, multi-pen trend recorder, P&ID instrument symbols, process flow diagram, motor dashboard, and predictive-maintenance gauge — for manufacturing HMIs, energy control rooms, water-treatment dashboards, smart-factory monitors, and process-control UIs.
 
+![Waterfall spectrogram](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/industrial-spectrogram.gif)
+
 [![npm version](https://img.shields.io/npm/v/@altara/industrial?color=EF9F27&label=npm)](https://www.npmjs.com/package/@altara/industrial)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/industrial?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/industrial)
 [![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/industrial)
 [![license](https://img.shields.io/npm/l/@altara/industrial?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
-
-![Waterfall spectrogram](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/industrial-spectrogram.gif)
 
 ## Install
 
@@ -37,6 +37,8 @@ export function FactoryFloor() {
   );
 }
 ```
+
+**See it live:** [Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)
 
 ## Components
 

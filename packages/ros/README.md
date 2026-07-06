@@ -2,6 +2,8 @@
 
 **ROS2 rosbridge adapter for Altara.** Subscribe to a ROS2 topic from React in one line and pipe live samples (IMU, GPS, battery, range, temperature, ...) into any [`@altara/core`](https://www.npmjs.com/package/@altara/core) component. Built for robotics dashboards, drone ground stations, and rover monitoring UIs.
 
+![Live GPS map driven by ROS2 telemetry](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/live-map.gif)
+
 [![npm version](https://img.shields.io/npm/v/@altara/ros?color=EF9F27&label=npm)](https://www.npmjs.com/package/@altara/ros)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/ros?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/ros)
 [![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/ros)
@@ -41,6 +43,8 @@ export function App() {
   );
 }
 ```
+
+**See it live:** [Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)
 
 ## What you get
 

@@ -2,12 +2,12 @@
 
 **Flight-instrument React components for Altara.** Embeddable Primary Flight Display (PFD), Horizontal Situation Indicator (HSI), altimeter, airspeed indicator, vertical speed indicator (VSI), engine instrument cluster, TCAS traffic display, terrain-awareness display (TAWS), autopilot mode annunciator, fuel gauge, and radio altimeter — for drone ground stations, eVTOL monitoring, UAV simulators, aviation dashboards, and aerospace research.
 
+![Primary Flight Display with flight director](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-pfd-fd.gif)
+
 [![npm version](https://img.shields.io/npm/v/@altara/aerospace?color=378ADD&label=npm)](https://www.npmjs.com/package/@altara/aerospace)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@altara/aerospace?color=378ADD&label=gzip)](https://bundlephobia.com/package/@altara/aerospace)
 [![types included](https://img.shields.io/badge/types-included-1D9E75)](https://www.npmjs.com/package/@altara/aerospace)
 [![license](https://img.shields.io/npm/l/@altara/aerospace?color=888780)](https://github.com/JayaSaiKishanChapparam/altara/blob/main/LICENSE)
-
-![Primary Flight Display with flight director](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-pfd-fd.gif)
 
 ## Install
 
@@ -35,6 +35,8 @@ export function App() {
   );
 }
 ```
+
+**See it live:** [Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)
 
 ## Components
 
