@@ -58,16 +58,21 @@ export function HorizontalSituationIndicator({
     s.bearing2 = b2Prop;
   }, [hdgProp, bugProp, crsProp, devProp, b1Prop, b2Prop]);
 
+  // Channels this component doesn't own are dropped rather than folded into
+  // heading — a merged multi-channel source otherwise spins the compass card
+  // from unrelated streams. Untagged samples still drive heading, so
+  // single-channel sources keep working.
   useEffect(() => {
     if (!dataSource) return;
     const apply = (v: TelemetryValue) => {
       const s = stateRef.current;
       switch (v.channel) {
-        case 'heading': s.heading = v.value; break;
+        case 'heading':
+        case undefined: s.heading = v.value; break;
         case 'headingBug': s.headingBug = v.value; break;
         case 'course': s.course = v.value; break;
         case 'courseDev': s.courseDev = v.value; break;
-        default: s.heading = v.value; break;
+        default: break;
       }
     };
     for (const v of dataSource.getHistory()) apply(v);

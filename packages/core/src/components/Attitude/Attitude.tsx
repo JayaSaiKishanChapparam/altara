@@ -48,7 +48,11 @@ export function Attitude({
     if (pitchProp !== undefined) stateRef.current.pitch = pitchProp;
   }, [rollProp, pitchProp]);
 
-  // Live data source: split by `channel` ('roll' | 'pitch') if present.
+  // Live data source: routed by `channel`. Channels this component doesn't own
+  // are dropped rather than folded into roll — a merged multi-channel source
+  // (see `mergeChannels`) otherwise drives the horizon from unrelated streams
+  // like battery or GPS. Untagged samples still drive roll, so single-channel
+  // sources keep working.
   useEffect(() => {
     if (!dataSource) return;
     for (const v of dataSource.getHistory()) apply(v);
@@ -57,8 +61,18 @@ export function Attitude({
       off();
     };
     function apply(v: TelemetryValue) {
-      if (v.channel === 'pitch') stateRef.current.pitch = v.value;
-      else stateRef.current.roll = v.value;
+      const s = stateRef.current;
+      switch (v.channel) {
+        case 'pitch':
+          s.pitch = v.value;
+          break;
+        case 'roll':
+        case undefined:
+          s.roll = v.value;
+          break;
+        default:
+          break;
+      }
     }
   }, [dataSource]);
 

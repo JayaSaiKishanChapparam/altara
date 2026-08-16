@@ -88,6 +88,48 @@ describe('Attitude', () => {
     expect(label).toMatch(/pitch -10\.0°/);
   });
 
+  it('ignores channels it does not own instead of folding them into roll', () => {
+    const ds = controllableSource();
+    const { getByRole } = render(<Attitude dataSource={ds} />);
+    act(() => ds.emit(12, 'roll'));
+    act(() => ds.emit(-4, 'pitch'));
+    // A merged source also carries foreign channels. Before the fix these fell
+    // through to roll, so a battery reading of 85.9% banked the horizon to 85.9°.
+    act(() => ds.emit(85.9, 'battery'));
+    act(() => ds.emit(107.3, 'heading'));
+    act(() => ds.emit(4553, 'altitude'));
+    act(() => vi.advanceTimersByTime(600));
+    const label = getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label).toMatch(/roll 12\.0°/);
+    expect(label).toMatch(/pitch -4\.0°/);
+  });
+
+  it('drives roll from untagged samples so single-channel sources still work', () => {
+    const ds = controllableSource();
+    const { getByRole } = render(<Attitude dataSource={ds} />);
+    act(() => ds.emit(33));
+    act(() => vi.advanceTimersByTime(600));
+    expect(getByRole('img').getAttribute('aria-label')).toMatch(/roll 33\.0°/);
+  });
+
+  it('replays channel-routed history on mount', () => {
+    const ds: AltaraDataSource = {
+      subscribe: () => () => undefined,
+      getHistory: () => [
+        { value: 7, timestamp: 1, channel: 'roll' },
+        { value: -2, timestamp: 2, channel: 'pitch' },
+        { value: 85.9, timestamp: 3, channel: 'battery' },
+      ],
+      status: 'connected',
+      destroy() {},
+    };
+    const { getByRole } = render(<Attitude dataSource={ds} />);
+    act(() => vi.advanceTimersByTime(600));
+    const label = getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label).toMatch(/roll 7\.0°/);
+    expect(label).toMatch(/pitch -2\.0°/);
+  });
+
   it('mockMode mounts and runs without errors when no dataSource is given', () => {
     expect(() => render(<Attitude mockMode />)).not.toThrow();
   });
