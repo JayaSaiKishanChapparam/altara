@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    // `import.meta.env.BASE_URL` in ReplayView — resolves the fixture URL
+    // against the GitHub Pages base path.
+    "types": ["vite/client"]
   },
   "include": ["src/**/*"]
 }
