@@ -5,11 +5,17 @@ import { CoreView } from './views/CoreView';
 import { AerospaceView } from './views/AerospaceView';
 import { AvView } from './views/AvView';
 import { IndustrialView } from './views/IndustrialView';
+import { ReplayView } from './views/ReplayView';
 
-type ViewKey = 'gcs' | 'core' | 'aerospace' | 'av' | 'industrial';
+type ViewKey = 'gcs' | 'replay' | 'core' | 'aerospace' | 'av' | 'industrial';
 
 const TABS: { key: ViewKey; label: string; description: string }[] = [
   { key: 'gcs', label: 'Drone GCS', description: 'PFD + map + battery + events over @altara/ros' },
+  {
+    key: 'replay',
+    label: 'Replay',
+    description: 'Recorded session played back through the AltaraDataSource interface',
+  },
   { key: 'core', label: 'Telemetry', description: '@altara/core primitives' },
   { key: 'aerospace', label: 'Drone / Aerospace', description: '@altara/aerospace flight instruments' },
   { key: 'av', label: 'Autonomous Vehicle', description: '@altara/av perception & control' },
@@ -60,6 +66,7 @@ export function App() {
       </div>
 
       {active === 'gcs' && <GcsView />}
+      {active === 'replay' && <ReplayView />}
       {active === 'core' && <CoreView />}
       {active === 'aerospace' && <AerospaceView />}
       {active === 'av' && <AvView />}
