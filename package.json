@@ -16,9 +16,12 @@
     "build-storybook": "turbo run build-storybook",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "turbo run build && changeset publish"
+    "release": "turbo run build && changeset publish",
+    "typecheck": "turbo run typecheck",
+    "check-packaging": "node scripts/check-packaging.mjs"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.0",
     "@changesets/cli": "^2.27.1",
     "@size-limit/preset-small-lib": "^11.1.2",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
@@ -28,6 +31,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "playwright": "^1.59.1",
     "prettier": "^3.2.5",
+    "publint": "^0.3.0",
     "size-limit": "^11.1.2",
     "turbo": "^1.13.2",
     "typescript": "^5.4.5"
