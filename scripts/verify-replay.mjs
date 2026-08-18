@@ -91,9 +91,9 @@ const att1 = await attitudeLabel();
 const attRoll = Number((att1.match(/roll (-?\d+\.\d+)/) ?? [])[1]);
 const attPitch = Number((att1.match(/pitch (-?\d+\.\d+)/) ?? [])[1]);
 check(
-  'Attitude reads only roll/pitch (within recorded ranges)',
+  'Attitude reads only roll/pitch (within the session's ranges)',
   Math.abs(attRoll) <= 18.5 && Math.abs(attPitch) <= 8.5,
-  `${att1} — recorded roll ±18°, pitch ±8°`,
+  `${att1} — session roll ±18°, pitch ±8°`,
 );
 
 const pfd = await page.evaluate(inkOf, '.vt-pfd canvas');
@@ -103,14 +103,14 @@ const att = await page.evaluate(inkOf, '.vt-component:not(.vt-pfd) canvas');
 check('Attitude canvas renders', att && att.inkRatio > 0.05, att ? `ink=${(att.inkRatio * 100).toFixed(1)}%` : 'canvas missing');
 
 const bat1 = await batteryPct();
-check('Gauge reads recorded battery', Number.isFinite(bat1) && bat1 > 30 && bat1 < 95, `battery=${bat1}%`);
+check('Gauge reads the session battery', Number.isFinite(bat1) && bat1 > 30 && bat1 < 95, `battery=${bat1}%`);
 
 const sigText = await page.locator('.demo-card', { hasText: 'SignalPanel' }).innerText();
 const sigNums = sigText.match(/-?\d+\.?\d*\s*(kt|ft|fpm|°)/g) ?? [];
 check('SignalPanel rows all populated', sigNums.length === 4, sigNums.join(', ') || 'none');
 
 const markers = await page.locator('.vt-live-map__heading-arrow').count();
-check('LiveMap renders marker from recorded GPS', markers > 0, `markers=${markers}`);
+check('LiveMap renders marker from the session GPS', markers > 0, `markers=${markers}`);
 
 // ── Forward, then backward scrub ────────────────────────────────────────
 await page.getByRole('button', { name: 'Pause' }).click();

@@ -1,8 +1,9 @@
 {
   "name": "@altara/av",
   "version": "0.1.2",
-  "description": "Autonomous-vehicle React components for Altara — LiDAR point cloud (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, SLAM map.",
+  "description": "Autonomous-vehicle React components for Altara \u2014 LiDAR point cloud (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, SLAM map.",
   "license": "MIT",
+  "type": "commonjs",
   "author": "Jaya Sai Kishan Chapparam",
   "homepage": "https://github.com/JayaSaiKishanChapparam/altara/tree/main/packages/av#readme",
   "repository": {
@@ -46,19 +47,25 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "files": [
     "dist",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node ../../scripts/add-use-client.mjs",
     "test": "vitest run --passWithNoTests",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit"
@@ -86,5 +93,8 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

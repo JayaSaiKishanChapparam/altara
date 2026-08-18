@@ -90,13 +90,13 @@ const source = mergeChannels({
 
 ## Why Altara
 
-Most React charting libraries render via SVG or React DOM — at 100 Hz+ sensor data rates that causes visible jank. Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
+Most React charting libraries re-render a React subtree per update, so paint cost scales with how often the data changes. Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
 
 It also ships the domain-specific components engineers actually need — attitude indicators, live GPS maps, threshold-aware gauges — and a typed rosbridge adapter (in [`@altara/ros`](https://www.npmjs.com/package/@altara/ros)) so a one-line import gets you live ROS2 data on screen.
 
 ## Bundle size
 
-Under 30 KB gzipped. Optional peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `mqtt`, `three`) are dynamically imported and only paid for if you use the components that need them.
+12.2 KB gzipped, enforced in CI by a 30 KB `size-limit` gate. Optional peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `mqtt`, `three`) are dynamically imported and only paid for if you use the components that need them.
 
 ## Documentation
 
@@ -127,6 +127,22 @@ pnpm --filter @altara/demo dev              # http://localhost:5173
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
+
+## Stability
+
+**Pre-1.0.** Every package is below `1.0.0`, and until one reaches it the public
+API is not considered stable:
+
+- **Patch** (`0.2.1` -> `0.2.2`) — bug fixes, docs, packaging. Safe.
+- **Minor** (`0.2.x` -> `0.3.0`) — new features, and **may include breaking
+  changes**. This is the pre-1.0 semver allowance, not an accident. Pin the
+  minor (`~0.2.0`) if you need that not to happen.
+- Breaking changes are always described in the package's
+  [CHANGELOG](CHANGELOG.md); anything spanning packages also lands in
+  [MIGRATION.md](https://github.com/JayaSaiKishanChapparam/altara/blob/main/MIGRATION.md).
+
+In practice the component APIs have been stable since `0.1.0` and every break so
+far has been in the adapter layer. That is a track record, not a guarantee.
 
 ## License
 

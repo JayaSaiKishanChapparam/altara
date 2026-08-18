@@ -4,7 +4,7 @@ import { PrimaryFlightDisplay } from '@altara/aerospace';
 import { ReplayDataSource } from '../replay/ReplayDataSource';
 import type { ReplayRecording } from '../replay/ReplayDataSource';
 
-const FIXTURE_URL = `${import.meta.env.BASE_URL}replay/gcs-session.json`;
+const FIXTURE_URL = `${import.meta.env.BASE_URL}replay/synthetic-session.json`;
 const SPEEDS = [0.5, 1, 2] as const;
 
 // Hoisted because the transport re-renders this view ~10x/second. TimeSeries
@@ -33,7 +33,7 @@ function formatClock(ms: number): string {
 }
 
 /**
- * Replay tab — the GCS four-up driven entirely by a recorded session instead
+ * Replay tab — the GCS four-up driven entirely by a synthetic session instead
  * of mockMode. One `ReplayDataSource` feeds every component; the transport
  * below works in recording-relative time.
  *
@@ -171,10 +171,10 @@ export function ReplayView() {
         <div className="demo-card">
           <h3 className="demo-card-title">Replay</h3>
           <p style={{ color: 'var(--vt-color-danger)', margin: 0 }}>
-            Could not load the recorded session: {loadError}
+            Could not load the synthetic session: {loadError}
           </p>
           <p style={{ color: 'var(--vt-text-secondary)', marginBottom: 0 }}>
-            Regenerate it with <code>node scripts/generate-replay-fixture.mjs</code>.
+            Regenerate it with <code>node scripts/generate-synthetic-session.mjs</code>.
           </p>
         </div>
       </div>
@@ -187,7 +187,7 @@ export function ReplayView() {
         <div className="demo-card">
           <h3 className="demo-card-title">Replay</h3>
           <p style={{ color: 'var(--vt-text-secondary)', margin: 0 }}>
-            Loading recorded session…
+            Loading synthetic session…
           </p>
         </div>
       </div>
@@ -198,7 +198,7 @@ export function ReplayView() {
     <div className="demo-view">
       <div className="demo-card">
         <h3 className="demo-card-title">
-          Transport — recorded session ({(duration / 1000).toFixed(0)}s)
+          Transport — synthetic session ({(duration / 1000).toFixed(0)}s)
         </h3>
         <div className="demo-row" style={{ alignItems: 'center' }}>
           <button className="demo-tab" onClick={handleToggle} aria-label={playing ? 'Pause' : 'Play'}>
@@ -246,7 +246,7 @@ export function ReplayView() {
           <PrimaryFlightDisplay dataSource={source} size="lg" showFlightDirector />
         </div>
         <div className="demo-card">
-          <h3 className="demo-card-title">LiveMap — recorded GPS track</h3>
+          <h3 className="demo-card-title">LiveMap — synthetic GPS track</h3>
           {/* `.vt-live-map` is height:100%, so Leaflet needs an ancestor with a
               definite height — a min-height alone lets the map grow unbounded. */}
           <div style={{ height: 420 }}>

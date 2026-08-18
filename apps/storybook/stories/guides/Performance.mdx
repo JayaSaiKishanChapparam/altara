@@ -14,7 +14,7 @@ This is measured, not assumed. The benchmark in `scripts/bench/` (`apps/demo/ben
 
 - **React-driven SVG** starts dropping frames around **N ≈ 300** widgets, and by **N ≈ 50** once the CPU is throttled to mid-tier-laptop speed.
 - **Imperative SVG** roughly doubles that headroom (drops ≈ N ≈ 600) — so about half of React-driven SVG's per-frame cost is React reconciliation, not SVG.
-- **Canvas** keeps per-frame main-thread work ~10× lower than imperative SVG (≈ 1 ms vs ≈ 5 ms at N = 200) and holds 60 fps furthest, including N = 200 on throttled hardware where both SVG paths fail.
+- **Canvas** keeps per-frame main-thread work lowest by a wide margin — at N = 200, mean work is 1.13 ms vs 5.18 ms for imperative SVG (≈4.6×) and 10.28 ms for React-driven SVG (≈9×) — and holds 60 fps furthest, including N = 200 on throttled hardware where both SVG paths fail.
 
 So Canvas is the default for the **high-frequency** charts — `TimeSeries`, `MultiAxisPlot`, `Attitude` — which write directly to a Canvas via `requestAnimationFrame`:
 
@@ -26,7 +26,7 @@ Lower-frequency widgets don't need it: `Gauge` is SVG (a single needle updated v
 
 ## RingBuffer — bounded memory, fast reads
 
-Plain JS arrays grow unbounded. Push `[]`-into-`.push(x)` at 1 kHz and within minutes you've allocated tens of megabytes of garbage.
+Plain JS arrays grow unbounded. Push into one on every sample and the array — and the garbage from each reallocation — grows without limit for as long as the page is open.
 
 Altara stores telemetry in a `RingBuffer`:
 
@@ -76,7 +76,7 @@ Pick `bufferSize ≥ rate × windowMs / 1000` so you have at least the visible w
 
 ## High-frequency feeds: the Web Worker pipeline
 
-Above ~500 Hz, even decoding the WebSocket frames on the main thread starts to nibble at the frame budget. `createWorkerDataSource` moves the entire ingest path off-thread:
+Past some rate — one you have to find on your own hardware, because it depends on payload shape, decode cost and what else the page is doing — decoding WebSocket frames on the main thread starts to nibble at the frame budget. `createWorkerDataSource` moves the entire ingest path off-thread:
 
 ```ts
 import { createWorkerDataSource } from '@altara/core';
@@ -97,7 +97,7 @@ The worker:
 2. Batches incoming samples in memory.
 3. Posts batches to the main thread at `flushHz` (default 60), independent of the inbound rate.
 
-Net effect: the main thread only sees ~60 messages per second regardless of whether the source is publishing at 100 Hz or 10 kHz.
+Net effect: the worker coalesces to one batch per animation frame, so the main thread sees roughly one message per frame no matter how fast the source publishes.
 
 ## FPS tuning
 

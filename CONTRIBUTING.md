@@ -98,7 +98,7 @@ Performance is non-negotiable. Read [`docs/accessibility.md`](docs/accessibility
 
 - High-frequency telemetry must not call `setState`. Write to a `RingBuffer` via a `useRef` and read in your `requestAnimationFrame` loop.
 - Never push to a plain JS array for telemetry data. The `RingBuffer` (Float64Array) is fixed-capacity and overwrites oldest.
-- For ≥500 Hz feeds use `createWorkerDataSource` so the WebSocket runs off-thread.
+- For high-rate feeds use `createWorkerDataSource` so the WebSocket runs off-thread.
 - Canvas sizing must respect `window.devicePixelRatio` to avoid retina blurriness.
 - Heavy peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `three`, `mqtt`) stay external — they're optional peer deps, dynamically imported, and externalized in `tsup.config.ts`.
 
@@ -144,3 +144,39 @@ After the repo is public, **Discussions** is enabled in `Settings → General �
 ## License
 
 By contributing you agree that your contribution is licensed under the MIT License (the same license as the project).
+
+## Sign your work (DCO)
+
+Altara uses the [Developer Certificate of Origin](https://developercertificate.org/)
+rather than a CLA. There is nothing to sign and no form to fill in — you keep
+copyright in your contribution, and you assert that you have the right to submit
+it under the project's MIT license.
+
+Add a `Signed-off-by` line to each commit:
+
+```bash
+git commit -s -m "fix(core): ..."
+```
+
+which appends:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+Use your real name and an address you can be reached at. To sign off work you
+have already committed:
+
+```bash
+git rebase --signoff main
+```
+
+Contributions merged before this policy existed are grandfathered in; nobody
+will be asked to retroactively sign off.
+
+## Credit
+
+External contributions are credited by GitHub handle and PR number in the
+affected package's `CHANGELOG.md`. If you contribute and a release goes out
+without your name on it, that is a bug — open an issue and it will be fixed
+retroactively.

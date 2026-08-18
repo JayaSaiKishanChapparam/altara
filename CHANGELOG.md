@@ -4,16 +4,29 @@ A curated narrative of what's published. Per-package CHANGELOGs (maintained by [
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Until any package reaches `1.0.0` the public API is still considered pre-stable; minor bumps may include additive breaks. The MIGRATION guide tracks any cross-package break.
 
-## Currently published
+## Where the versions live
 
-| Package | Version | npm |
+There is no hand-maintained version table here — it went stale (it claimed
+`@altara/core@0.0.2` while npm was serving `0.2.1`) and a table that lies is
+worse than no table.
+
+For what is published right now, read the source of truth:
+
+| Package | npm | Changelog |
 | --- | --- | --- |
-| `@altara/core` | `0.0.2` | https://npmjs.com/package/@altara/core |
-| `@altara/aerospace` | `0.1.0` | https://npmjs.com/package/@altara/aerospace |
-| `@altara/av` | `0.1.0` | https://npmjs.com/package/@altara/av |
-| `@altara/industrial` | `0.1.0` | https://npmjs.com/package/@altara/industrial |
-| `@altara/ros` | `0.0.2` | https://npmjs.com/package/@altara/ros |
-| `@altara/mqtt` | `0.1.0` | https://npmjs.com/package/@altara/mqtt |
+| `@altara/core` | [npm](https://npmjs.com/package/@altara/core) | [CHANGELOG](packages/core/CHANGELOG.md) |
+| `@altara/aerospace` | [npm](https://npmjs.com/package/@altara/aerospace) | [CHANGELOG](packages/aerospace/CHANGELOG.md) |
+| `@altara/av` | [npm](https://npmjs.com/package/@altara/av) | [CHANGELOG](packages/av/CHANGELOG.md) |
+| `@altara/industrial` | [npm](https://npmjs.com/package/@altara/industrial) | [CHANGELOG](packages/industrial/CHANGELOG.md) |
+| `@altara/ros` | [npm](https://npmjs.com/package/@altara/ros) | [CHANGELOG](packages/ros/CHANGELOG.md) |
+| `@altara/mqtt` | [npm](https://npmjs.com/package/@altara/mqtt) | [CHANGELOG](packages/mqtt/CHANGELOG.md) |
+
+Those per-package changelogs are written by Changesets on every release and
+ship inside the published tarballs, so `npm view <pkg> versions` and the
+changelog can't drift apart.
+
+Everything below is the historical narrative of the early releases, kept as
+written.
 
 ## Initial publish — `@altara/core@0.0.1`, `@altara/ros@0.0.1`
 

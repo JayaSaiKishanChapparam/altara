@@ -87,7 +87,7 @@ export function FactoryFloor() {
 
 ## FFT performance
 
-`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT — fine at `fftSize ≤ 2048` and `scrollRate ≤ 30 Hz` on modern hardware. For very large FFTs at high cadences, push the work into a Web Worker via [`createWorkerDataSource`](https://www.npmjs.com/package/@altara/core) from `@altara/core` to keep the main thread at 60 fps.
+`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT on the main thread. Cost grows with `fftSize` and `scrollRate`, so if a large transform at a high scroll rate starts costing you frames, push the work into a Web Worker via [`createWorkerDataSource`](https://www.npmjs.com/package/@altara/core) from `@altara/core`. Profile against your own hardware and settings rather than assuming a threshold.
 
 ## Data sources
 
@@ -124,6 +124,22 @@ pnpm --filter @altara/demo dev              # http://localhost:5173
 - [GitHub repository](https://github.com/JayaSaiKishanChapparam/altara)
 - [Issue tracker](https://github.com/JayaSaiKishanChapparam/altara/issues)
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
+
+## Stability
+
+**Pre-1.0.** Every package is below `1.0.0`, and until one reaches it the public
+API is not considered stable:
+
+- **Patch** (`0.2.1` -> `0.2.2`) — bug fixes, docs, packaging. Safe.
+- **Minor** (`0.2.x` -> `0.3.0`) — new features, and **may include breaking
+  changes**. This is the pre-1.0 semver allowance, not an accident. Pin the
+  minor (`~0.2.0`) if you need that not to happen.
+- Breaking changes are always described in the package's
+  [CHANGELOG](CHANGELOG.md); anything spanning packages also lands in
+  [MIGRATION.md](https://github.com/JayaSaiKishanChapparam/altara/blob/main/MIGRATION.md).
+
+In practice the component APIs have been stable since `0.1.0` and every break so
+far has been in the adapter layer. That is a track record, not a guarantee.
 
 ## License
 

@@ -18,10 +18,14 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo lint
+      - run: pnpm turbo typecheck
       - run: pnpm turbo test
       - run: pnpm turbo build
       - name: Check bundle size (all packages)
         run: pnpm exec size-limit
+      # publint + attw inspect the packed tarball, so this must follow the build.
+      - name: Check packaging (publint + attw)
+        run: node scripts/check-packaging.mjs
 
   storybook:
     runs-on: ubuntu-latest

@@ -72,7 +72,7 @@ export function Dashboard() {
 
 ## Why Altara
 
-Most React charting libraries render via SVG or React DOM. At 100 Hz+ sensor data rates, that path causes visible jank — every tick re-renders the chart's React subtree, and SVG paint costs scale with point count.
+Most React charting libraries render via SVG or React DOM, so every tick re-renders the chart's React subtree and paint cost scales with point count. Altara keeps the hot path out of React entirely.
 
 Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
 

@@ -118,7 +118,7 @@ For `LiDARPointCloud`, the `PointCloud2` decoder lives in your own `AltaraDataSo
 
 ## Production checklist
 
-- Decode `PointCloud2` in a Web Worker — `createWorkerDataSource` from `@altara/core` is the canonical place to put the decoder so the main thread stays at 60 fps.
+- Decode `PointCloud2` in a Web Worker — `createWorkerDataSource` from `@altara/core` is the canonical place to put the decoder, so decoding never competes with the render loop.
 - For dense scenes, drop `LiDARPointCloud`'s `maxPoints` prop until the GPU stays well under 8 ms per frame on your target hardware.
 - Wire `SensorHealthMatrix` to `/diagnostics` and use it as the source of truth — display unexpected `stale` / `error` states prominently in the operator UI.
 - Wrap the whole layout in `DashboardLayout` (from `@altara/core`) so the operator can resize panels during a drive.

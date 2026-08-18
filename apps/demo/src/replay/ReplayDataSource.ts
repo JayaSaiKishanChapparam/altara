@@ -14,10 +14,10 @@ export interface ReplayEvent {
   severity: 'info' | 'warn' | 'error';
 }
 
-/** The on-disk fixture format written by scripts/generate-replay-fixture.mjs. */
+/** The on-disk fixture format written by scripts/generate-synthetic-session.mjs. */
 export interface ReplayRecording {
   version: number;
-  /** Unix ms at which the original capture started. Display only. */
+  /** Unix ms at which the session's first sample is stamped. Display only. */
   startedAt: number;
   durationMs: number;
   channels: string[];
@@ -46,22 +46,27 @@ export interface SeekInfo {
 const UI_TICK_MS = 100;
 
 /**
- * Plays a recorded session back through the `AltaraDataSource` interface, so
- * every Altara component drives off it unchanged.
+ * Plays a pre-generated session back through the `AltaraDataSource` interface,
+ * so every Altara component drives off it unchanged.
+ *
+ * The bundled session is **synthetic**, not a capture off real hardware — it is
+ * produced by `scripts/generate-synthetic-session.mjs` from the same mock
+ * generators the live demo tabs use. The class itself is agnostic: hand it a
+ * real capture in the same shape and it plays that back identically.
  *
  * ## Two timebases
  *
  * The class deliberately keeps two clocks apart:
  *
  * - **Recording time** (`playhead`, `ReplaySample.t`) — milliseconds from the
- *   start of the capture. This is the scrubber's coordinate system and the
+ *   start of the session. This is the scrubber's coordinate system and the
  *   only timebase the transport UI ever touches.
  * - **Wall-clock time** — what components see on `TelemetryValue.timestamp`.
  *   Every emitted sample is re-stamped to `Date.now()`-relative time.
  *
  * The re-stamp is what makes replay work at all: `TimeSeries` anchors its
  * x-axis to `Date.now()` and discards anything older than `windowMs`, so
- * samples carrying their original capture timestamps would buffer correctly
+ * samples carrying their original session timestamps would buffer correctly
  * and then render as an empty chart. Mapping recording time onto live
  * wall-clock — at the current playback `speed` — keeps that path identical to
  * live.

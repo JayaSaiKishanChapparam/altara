@@ -2,7 +2,9 @@
 
 **React components for real-time telemetry dashboards.** Built for robotics, aerospace, and industrial IoT — embed canvas-rendered instruments, time-series, live maps, and flight displays directly into any React app.
 
-![Altara — real-time telemetry at 60fps](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/drone-gcs-hero.gif)
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/drone-gcs-hero.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/drone-gcs-hero.png" width="900" muted autoplay loop playsinline></video>
+
+<sub>A drone ground station built from <code>core</code> + <code>aerospace</code>. Video not playing? <a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/drone-gcs-hero.gif">Watch the GIF</a>.</sub>
 
 **[Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)**
 
@@ -61,6 +63,38 @@ export function Dashboard() {
 
 `mockMode` plumbs realistic synthetic data into every component until you swap in a real `dataSource`.
 
+## Next.js / SSR
+
+Every published bundle ships with the `"use client"` directive, so you can import
+Altara directly from a **Next.js App Router** server component file without
+wrapping each import yourself:
+
+```tsx
+// app/page.tsx — no 'use client' needed here
+import { AltaraProvider, Gauge } from '@altara/core';
+
+export default function Page() {
+  return (
+    <AltaraProvider theme="dark">
+      <Gauge mockMode min={0} max={100} label="Battery" unit="%" />
+    </AltaraProvider>
+  );
+}
+```
+
+What that does and doesn't cover:
+
+- **Components are client-side.** They render to Canvas/SVG and drive off
+  `requestAnimationFrame`, so they mount and paint in the browser. There is no
+  server-rendered fallback image — expect an empty box in the initial HTML.
+- **No module-scope browser access.** Nothing touches `window`, `document`, or
+  `navigator` at import time, so bundling and RSC analysis in a Node environment
+  are safe. All DOM access lives inside effects.
+- **Pages Router / Vite / CRA** need no directive and are unaffected by it.
+- **Optional peer deps** (`leaflet`, `react-leaflet`, `react-grid-layout`,
+  `three`, `mqtt`) are dynamically imported at runtime, so they are never pulled
+  into a server bundle.
+
 ## What's included
 
 ### `@altara/core` — telemetry primitives
@@ -77,20 +111,20 @@ export function Dashboard() {
 | `MultiAxisPlot` | Dual-Y-axis time-series chart. |
 | `DashboardLayout` | `react-grid-layout` integration for draggable / resizable panels. |
 
-Plus `createWorkerDataSource` (off-thread WebSocket pipeline for ≥500 Hz feeds), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
+Plus `createWorkerDataSource` (moves the WebSocket ingest path off the main thread for high-rate feeds), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
 
 ### `@altara/aerospace` — flight instruments
 
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/aerospace-pfd-fd.gif" width="520" alt="Primary Flight Display with flight director"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-pfd-fd.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-pfd-fd.png" width="520" muted autoplay loop playsinline title="Primary Flight Display with flight director"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-pfd-fd.gif">GIF fallback</a></sub><br/>
 <sub><b>PrimaryFlightDisplay</b> — composite PFD with attitude, tapes, VSI, and flight director</sub>
 </td>
 </tr>
 <tr>
 <td align="center">
-<img src="apps/storybook/public/gifs/aerospace-hsi.gif" width="240" alt="Horizontal Situation Indicator"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-hsi.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-hsi.png" width="240" muted autoplay loop playsinline title="Horizontal Situation Indicator"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-hsi.gif">GIF fallback</a></sub><br/>
 <sub><b>HorizontalSituationIndicator</b></sub>
 </td>
 <td align="center">
@@ -127,7 +161,7 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/av-lidar.gif" width="520" alt="LiDAR point cloud — Three.js"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-lidar.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-lidar.png" width="520" muted autoplay loop playsinline title="LiDAR point cloud — Three.js"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-lidar.gif">GIF fallback</a></sub><br/>
 <sub><b>LiDARPointCloud</b> — Three.js point cloud, color by intensity</sub>
 </td>
 </tr>
@@ -137,7 +171,7 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 <sub><b>OccupancyGrid</b></sub>
 </td>
 <td align="center">
-<img src="apps/storybook/public/gifs/av-radar.gif" width="240" alt="Radar sweep"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-radar.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-radar.png" width="240" muted autoplay loop playsinline title="Radar sweep"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-radar.gif">GIF fallback</a></sub><br/>
 <sub><b>RadarSweep</b></sub>
 </td>
 </tr>
@@ -158,7 +192,7 @@ import { WaterfallSpectrogram, OEEDashboard, AlarmAnnunciatorPanel } from '@alta
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/industrial-spectrogram.gif" width="640" alt="Waterfall spectrogram — FFT"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/industrial-spectrogram.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/industrial-spectrogram.png" width="640" muted autoplay loop playsinline title="Waterfall spectrogram — FFT"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/industrial-spectrogram.gif">GIF fallback</a></sub><br/>
 <sub><b>WaterfallSpectrogram</b> — Hann + radix-2 FFT, dB color map</sub>
 </td>
 </tr>
@@ -207,17 +241,63 @@ JSON / string / binary payload decoding, MQTT topic wildcards (`+`, `#`).
 
 ## Why Altara
 
+Grafana and Foxglove are **applications**; Altara and Recharts are **libraries you
+compile into your own app**. That is the real axis — most of the table follows
+from it.
+
 | | Altara | Grafana | Foxglove | Recharts |
 | --- | --- | --- | --- | --- |
-| Embeds in React app | ✅ Native | ❌ iframe only | ❌ Separate app | ✅ Native |
-| 60fps canvas rendering | ✅ | ❌ SVG | ✅ | ❌ SVG |
-| Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Partial | ❌ |
+| Shape | React library | Server + web app | Desktop / web app | React library |
+| Embeds in React app | ✅ Native | ❌ Iframe embed | ❌ Separate app | ✅ Native |
+| Renders to | Canvas + rAF | Canvas (uPlot) | Canvas / WebGL | SVG |
+| Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Generic gauges/indicators, no flight instruments | ❌ |
 | AV / LiDAR / perception | ✅ Native (Three.js) | ❌ | ✅ Native | ❌ |
 | Industrial / SCADA / HMI | ✅ Native (FFT, OEE, P&ID, alarms) | ⚠️ Plugin | ❌ | ❌ |
 | ROS2 adapter | ✅ Native | ⚠️ Plugin | ✅ Native | ❌ |
 | MQTT adapter | ✅ Native | ⚠️ Plugin | ❌ | ❌ |
-| Bundle size | <30KB gz (core) | Standalone app | Standalone app | ~80KB gz |
-| License | MIT | AGPL | Proprietary | MIT |
+| Alerting, auth, RBAC | ❌ Your app's job | ✅ Built in | ✅ Built in | ❌ |
+| Bundle size | 12.2 KB gz (core) | n/a — separate app | n/a — separate app | 147.9 KB gz |
+| License | MIT | AGPL-3.0 | Proprietary | MIT |
+
+<sub>Rendering is <b>not</b> a differentiator against Grafana — its Time series
+panel renders to canvas via uPlot, same as Altara. The difference is
+architectural: Altara's render loop runs inside your app on data you already
+have, with no server or query round-trip. Sizes measured 2026-08-18 —
+<code>@altara/core@0.2.1</code> via <code>size-limit</code>,
+<code>recharts@3.10.1</code> via bundlephobia.</sub>
+
+### The rendering claim, measured
+
+![Per-frame main-thread work vs. widget count — Canvas vs. SVG](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/canvas-vs-svg-work.png)
+
+Per-frame main-thread work as the number of live widgets grows, on a 2019
+Intel i9-9880H (16 cores) in headed Chromium 147 at 1440×900. All three paths
+draw the identical picture from the identical math, so rendering technology is
+the only variable. At 200 widgets: **Canvas 1.13 ms, imperative SVG 5.18 ms,
+React-driven SVG 10.28 ms** per frame.
+
+Numbers are hardware-specific and the harness says so. Run it yourself, read
+the method and its caveats, or read the raw results:
+**[`scripts/bench/`](scripts/bench/)** ·
+[results-3way-highN.json](scripts/bench/results-3way-highN.json) ·
+[results-3way-cpu6x.json](scripts/bench/results-3way-cpu6x.json) (CPU throttled 6×) ·
+[results-alloc-baseline.json](scripts/bench/results-alloc-baseline.json) ([figure](docs/assets/ringbuffer-alloc.png))
+
+## Stability
+
+**Pre-1.0.** Every package is below `1.0.0`, and until one reaches it the public
+API is not considered stable:
+
+- **Patch** (`0.2.1` -> `0.2.2`) — bug fixes, docs, packaging. Safe.
+- **Minor** (`0.2.x` -> `0.3.0`) — new features, and **may include breaking
+  changes**. This is the pre-1.0 semver allowance, not an accident. Pin the
+  minor (`~0.2.0`) if you need that not to happen.
+- Breaking changes are always described in the package's
+  per-package CHANGELOG; anything spanning packages also lands in
+  [MIGRATION.md](MIGRATION.md).
+
+In practice the component APIs have been stable since `0.1.0` and every break so
+far has been in the adapter layer. That is a track record, not a guarantee.
 
 ## Documentation
 

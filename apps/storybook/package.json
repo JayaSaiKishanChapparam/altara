@@ -7,7 +7,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build -o storybook-static",
     "build": "storybook build -o storybook-static",
-    "lint": "echo 'no lint configured'"
+    "lint": "eslint stories .storybook --ext .ts,.tsx"
   },
   "dependencies": {
     "@altara/aerospace": "workspace:*",
@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@joshwooding/vite-plugin-react-docgen-typescript": "^0.5.0",
+    "@storybook/addon-a11y": "^8.0.8",
     "@storybook/addon-essentials": "^8.0.8",
     "@storybook/addon-themes": "^8.0.8",
     "@storybook/blocks": "^8.0.8",

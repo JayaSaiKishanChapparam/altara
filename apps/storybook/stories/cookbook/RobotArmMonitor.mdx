@@ -153,4 +153,4 @@ For programs you can step through frame-by-frame (e.g. recorded trajectories), b
 
 - Joint gauges use `size="sm"` (120 px). For wide displays bump to `"md"`; the layout is just a CSS grid.
 - The force-torque thresholds in `SignalPanel` are tuned to the wrist-sensor calibration — adjust per arm.
-- For 1 kHz force-torque streams, use `createWorkerDataSource` to keep the `SignalPanel` flash animation buttery.
+- For high-rate force-torque streams, use `createWorkerDataSource` to keep decoding off the main thread.
