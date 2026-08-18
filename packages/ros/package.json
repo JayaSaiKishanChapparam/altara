@@ -1,8 +1,9 @@
 {
   "name": "@altara/ros",
   "version": "0.1.1",
-  "description": "ROS2 rosbridge adapter for React — pipe live sensor_msgs/* topics (IMU, GPS, battery, range, temperature) into real-time Altara dashboards. Typed factories, auto-reconnect, ROS timestamp normalization.",
+  "description": "ROS2 rosbridge adapter for React \u2014 pipe live sensor_msgs/* topics (IMU, GPS, battery, range, temperature) into real-time Altara dashboards. Typed factories, auto-reconnect, ROS timestamp normalization.",
   "license": "MIT",
+  "type": "commonjs",
   "author": "Jaya Sai Kishan Chapparam",
   "homepage": "https://github.com/JayaSaiKishanChapparam/altara/tree/main/packages/ros#readme",
   "repository": {
@@ -41,9 +42,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     }
   },
   "files": [
@@ -70,5 +76,9 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=20"
   }
 }

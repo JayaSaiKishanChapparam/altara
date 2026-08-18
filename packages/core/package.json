@@ -1,8 +1,9 @@
 {
   "name": "@altara/core",
   "version": "0.2.1",
-  "description": "React components for real-time telemetry dashboards — canvas-rendered time-series, gauges, attitude indicators, GPS maps, signal panels, and event logs for robotics, aerospace, autonomous vehicles, and industrial IoT.",
+  "description": "React components for real-time telemetry dashboards \u2014 canvas-rendered time-series, gauges, attitude indicators, GPS maps, signal panels, and event logs for robotics, aerospace, autonomous vehicles, and industrial IoT.",
   "license": "MIT",
+  "type": "commonjs",
   "author": "Jaya Sai Kishan Chapparam",
   "homepage": "https://github.com/JayaSaiKishanChapparam/altara#readme",
   "repository": {
@@ -49,9 +50,14 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
     },
     "./styles.css": "./dist/tokens.css"
   },
@@ -108,5 +114,8 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.5.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
