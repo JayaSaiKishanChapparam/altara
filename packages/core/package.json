@@ -64,7 +64,7 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && cp src/tokens/tokens.css dist/tokens.css",
+    "build": "tsup && cp src/tokens/tokens.css dist/tokens.css && node ../../scripts/add-use-client.mjs",
     "dev": "tsup --watch",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx",

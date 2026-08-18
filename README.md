@@ -61,6 +61,38 @@ export function Dashboard() {
 
 `mockMode` plumbs realistic synthetic data into every component until you swap in a real `dataSource`.
 
+## Next.js / SSR
+
+Every published bundle ships with the `"use client"` directive, so you can import
+Altara directly from a **Next.js App Router** server component file without
+wrapping each import yourself:
+
+```tsx
+// app/page.tsx — no 'use client' needed here
+import { AltaraProvider, Gauge } from '@altara/core';
+
+export default function Page() {
+  return (
+    <AltaraProvider theme="dark">
+      <Gauge mockMode min={0} max={100} label="Battery" unit="%" />
+    </AltaraProvider>
+  );
+}
+```
+
+What that does and doesn't cover:
+
+- **Components are client-side.** They render to Canvas/SVG and drive off
+  `requestAnimationFrame`, so they mount and paint in the browser. There is no
+  server-rendered fallback image — expect an empty box in the initial HTML.
+- **No module-scope browser access.** Nothing touches `window`, `document`, or
+  `navigator` at import time, so bundling and RSC analysis in a Node environment
+  are safe. All DOM access lives inside effects.
+- **Pages Router / Vite / CRA** need no directive and are unaffected by it.
+- **Optional peer deps** (`leaflet`, `react-leaflet`, `react-grid-layout`,
+  `three`, `mqtt`) are dynamically imported at runtime, so they are never pulled
+  into a server bundle.
+
 ## What's included
 
 ### `@altara/core` — telemetry primitives
