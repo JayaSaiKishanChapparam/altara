@@ -1,0 +1,13 @@
+# Every change needs a review from the maintainer.
+# This file is the honest statement of the project's bus factor: one person.
+# If that changes, this is the first file to update.
+
+*                       @JayaSaiKishanChapparam
+
+# Published surface — anything here reaches npm.
+/packages/              @JayaSaiKishanChapparam
+
+# Release and CI plumbing.
+/.github/workflows/     @JayaSaiKishanChapparam
+/.changeset/            @JayaSaiKishanChapparam
+/scripts/               @JayaSaiKishanChapparam
