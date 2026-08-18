@@ -2,7 +2,9 @@
 
 **React components for real-time telemetry dashboards.** Built for robotics, aerospace, and industrial IoT — embed canvas-rendered instruments, time-series, live maps, and flight displays directly into any React app.
 
-![Altara — real-time telemetry at 60fps](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/drone-gcs-hero.gif)
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/drone-gcs-hero.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/drone-gcs-hero.png" width="900" muted autoplay loop playsinline></video>
+
+<sub>A drone ground station built from <code>core</code> + <code>aerospace</code>. Video not playing? <a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/drone-gcs-hero.gif">Watch the GIF</a>.</sub>
 
 **[Website](https://www.usealtara.dev/) · [Live demo](https://jayasaikishanchapparam.github.io/altara/demo/) · [Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)**
 
@@ -116,13 +118,13 @@ Plus `createWorkerDataSource` (off-thread WebSocket pipeline for ≥500 Hz feeds
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/aerospace-pfd-fd.gif" width="520" alt="Primary Flight Display with flight director"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-pfd-fd.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-pfd-fd.png" width="520" muted autoplay loop playsinline title="Primary Flight Display with flight director"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-pfd-fd.gif">GIF fallback</a></sub><br/>
 <sub><b>PrimaryFlightDisplay</b> — composite PFD with attitude, tapes, VSI, and flight director</sub>
 </td>
 </tr>
 <tr>
 <td align="center">
-<img src="apps/storybook/public/gifs/aerospace-hsi.gif" width="240" alt="Horizontal Situation Indicator"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-hsi.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/aerospace-hsi.png" width="240" muted autoplay loop playsinline title="Horizontal Situation Indicator"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/aerospace-hsi.gif">GIF fallback</a></sub><br/>
 <sub><b>HorizontalSituationIndicator</b></sub>
 </td>
 <td align="center">
@@ -159,7 +161,7 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/av-lidar.gif" width="520" alt="LiDAR point cloud — Three.js"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-lidar.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-lidar.png" width="520" muted autoplay loop playsinline title="LiDAR point cloud — Three.js"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-lidar.gif">GIF fallback</a></sub><br/>
 <sub><b>LiDARPointCloud</b> — Three.js point cloud, color by intensity</sub>
 </td>
 </tr>
@@ -169,7 +171,7 @@ import { LiDARPointCloud, OccupancyGrid, ControlTrace } from '@altara/av';
 <sub><b>OccupancyGrid</b></sub>
 </td>
 <td align="center">
-<img src="apps/storybook/public/gifs/av-radar.gif" width="240" alt="Radar sweep"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-radar.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/av-radar.png" width="240" muted autoplay loop playsinline title="Radar sweep"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/av-radar.gif">GIF fallback</a></sub><br/>
 <sub><b>RadarSweep</b></sub>
 </td>
 </tr>
@@ -190,7 +192,7 @@ import { WaterfallSpectrogram, OEEDashboard, AlarmAnnunciatorPanel } from '@alta
 <table>
 <tr>
 <td align="center" colspan="2">
-<img src="apps/storybook/public/gifs/industrial-spectrogram.gif" width="640" alt="Waterfall spectrogram — FFT"/><br/>
+<video src="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/industrial-spectrogram.mp4" poster="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/video/industrial-spectrogram.png" width="640" muted autoplay loop playsinline title="Waterfall spectrogram — FFT"></video><br/><sub><a href="https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/apps/storybook/public/gifs/industrial-spectrogram.gif">GIF fallback</a></sub><br/>
 <sub><b>WaterfallSpectrogram</b> — Hann + radix-2 FFT, dB color map</sub>
 </td>
 </tr>
