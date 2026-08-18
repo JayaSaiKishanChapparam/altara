@@ -17,7 +17,7 @@ Foxglove is a robotics observability platform. Altara is a React component libra
 ## Use Altara when
 
 - You're building a branded customer-facing product and the dashboards must live **inside** your React app.
-- The bundle needs to stay small — Altara core is < 30 KB gzipped, optional peer deps load on demand.
+- The bundle needs to stay small — Altara core is 12.2 KB gzipped (CI-gated at 30 KB), optional peer deps load on demand.
 - You want full control over UX, layout, theming, motion, and accessibility.
 - You're working with rosbridge / MQTT directly from the browser and don't want a desktop client in the loop.
 - You need a permissively licensed (MIT) library with no vendor dependency.
@@ -36,8 +36,8 @@ Foxglove is a robotics observability platform. Altara is a React component libra
 | **AV-pipeline UI (perception graph, SLAM, sensor health, control trace)** | Built-in (`@altara/av`). | Equivalent panels for some; not a unified AV stack. |
 | **rosbridge adapter** | Built-in (`@altara/ros`) with typed factories per `sensor_msgs/*`. | Native ROS support inside Studio. |
 | **MQTT support** | Built-in (`@altara/mqtt`). | Available via plugins / Foxglove agent. |
-| **High-frequency streams** | Web Worker pipeline keeps the main thread clean at 1 kHz+. | Performant; based on a similar architecture internally. |
-| **Bundle size in your app** | < 30 KB gzip. | N/A — separate application. |
+| **High-frequency streams** | Optional Web Worker pipeline moves decoding and buffering off the main thread. | Performant; based on a similar architecture internally. |
+| **Bundle size in your app** | 12.2 KB gzip, CI-gated at 30 KB. | N/A — separate application. |
 | **License** | MIT. | Proprietary. Foxglove Studio was open source under MPL-2.0 through v1.87.0 (Feb 2024); development of the open-source edition was discontinued and the product is commercial. |
 | **Pricing model** | Free and MIT. Every package is published; there is no paid tier. | Free tier; paid team / enterprise plans. |
 

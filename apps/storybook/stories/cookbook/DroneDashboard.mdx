@@ -135,4 +135,4 @@ const battery = createBatteryStateAdapter({
 - Replace the hardcoded `<ConnectionBar>` with one driven by `useWebSocket`'s status, latency, and a sliding-window message-rate calculation.
 - Add threshold props on the battery `Gauge` (`{ value: 20, color: 'var(--vt-color-warn)' }`, `{ value: 10, color: 'var(--vt-color-danger)' }`).
 - For the IMU `TimeSeries` add `thresholds` for the bank-angle limits you care about.
-- For ≥500 Hz IMU streams, use `createWorkerDataSource` instead of `createRosbridgeAdapter` — see the [Performance guide](?path=/docs/guides-performance--api-reference).
+- For high-rate IMU streams, use `createWorkerDataSource` instead of `createRosbridgeAdapter` — see the [Performance guide](?path=/docs/guides-performance--api-reference).

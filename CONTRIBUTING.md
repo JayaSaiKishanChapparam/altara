@@ -98,7 +98,7 @@ Performance is non-negotiable. Read [`docs/accessibility.md`](docs/accessibility
 
 - High-frequency telemetry must not call `setState`. Write to a `RingBuffer` via a `useRef` and read in your `requestAnimationFrame` loop.
 - Never push to a plain JS array for telemetry data. The `RingBuffer` (Float64Array) is fixed-capacity and overwrites oldest.
-- For ≥500 Hz feeds use `createWorkerDataSource` so the WebSocket runs off-thread.
+- For high-rate feeds use `createWorkerDataSource` so the WebSocket runs off-thread.
 - Canvas sizing must respect `window.devicePixelRatio` to avoid retina blurriness.
 - Heavy peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `three`, `mqtt`) stay external — they're optional peer deps, dynamically imported, and externalized in `tsup.config.ts`.
 

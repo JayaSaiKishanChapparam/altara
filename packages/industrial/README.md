@@ -87,7 +87,7 @@ export function FactoryFloor() {
 
 ## FFT performance
 
-`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT — fine at `fftSize ≤ 2048` and `scrollRate ≤ 30 Hz` on modern hardware. For very large FFTs at high cadences, push the work into a Web Worker via [`createWorkerDataSource`](https://www.npmjs.com/package/@altara/core) from `@altara/core` to keep the main thread at 60 fps.
+`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT on the main thread. Cost grows with `fftSize` and `scrollRate`, so if a large transform at a high scroll rate starts costing you frames, push the work into a Web Worker via [`createWorkerDataSource`](https://www.npmjs.com/package/@altara/core) from `@altara/core`. Profile against your own hardware and settings rather than assuming a threshold.
 
 ## Data sources
 

@@ -111,7 +111,7 @@ What that does and doesn't cover:
 | `MultiAxisPlot` | Dual-Y-axis time-series chart. |
 | `DashboardLayout` | `react-grid-layout` integration for draggable / resizable panels. |
 
-Plus `createWorkerDataSource` (off-thread WebSocket pipeline for ≥500 Hz feeds), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
+Plus `createWorkerDataSource` (moves the WebSocket ingest path off the main thread for high-rate feeds), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
 
 ### `@altara/aerospace` — flight instruments
 
