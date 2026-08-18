@@ -4,6 +4,30 @@
 
 ### Patch Changes
 
+- 943e142: perf(core): decimate canvas time-series rendering — thanks
+  [@iacker](https://github.com/iacker)!
+  ([#15](https://github.com/JayaSaiKishanChapparam/altara/pull/15))
+
+  `TimeSeries` and `MultiAxisPlot` drew one line segment per buffered sample, so
+  a full 10k-sample buffer painted 10k segments into a chart a few hundred
+  pixels wide — most of them landing on a pixel column another segment already
+  covered.
+
+  Both charts now run min/max decimation (`utils/minMaxDecimation.ts`) before
+  drawing: per pixel column, only the minimum and maximum are emitted, which
+  preserves the visual envelope — spikes included — while cutting the segment
+  count to roughly twice the pixel width.
+
+  No API change. Charts with fewer samples than pixel columns are unaffected.
+
+- a4b33ea: fix(core): `useTelemetry` now clears state when the source is removed
+  — thanks [@iacker](https://github.com/iacker)!
+  ([#16](https://github.com/JayaSaiKishanChapparam/altara/pull/16))
+
+  Going from a `dataSource` to `undefined` left the last received value and the
+  stale-detection timer in place, so a component that lost its source kept
+  showing the final reading as though it were current. State is now reset.
+
 - a320b40: fix(core): stop `Attitude` folding foreign channels into roll
 
   `Attitude` routed `'pitch'` and treated **every other** sample as roll, so any

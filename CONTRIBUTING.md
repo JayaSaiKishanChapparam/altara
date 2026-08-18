@@ -144,3 +144,10 @@ After the repo is public, **Discussions** is enabled in `Settings → General �
 ## License
 
 By contributing you agree that your contribution is licensed under the MIT License (the same license as the project).
+
+## Credit
+
+External contributions are credited by GitHub handle and PR number in the
+affected package's `CHANGELOG.md`. If you contribute and a release goes out
+without your name on it, that is a bug — open an issue and it will be fixed
+retroactively.
