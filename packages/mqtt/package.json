@@ -1,7 +1,7 @@
 {
   "name": "@altara/mqtt",
-  "version": "0.1.2",
-  "description": "MQTT-over-WebSocket adapter for React \u2014 subscribe to MQTT broker topics (sensors, IoT state, telemetry) and pipe live samples into real-time Altara dashboards. JSON / string / binary payloads, topic wildcards, auto-decode.",
+  "version": "0.1.3",
+  "description": "MQTT-over-WebSocket adapter for React — subscribe to MQTT broker topics (sensors, IoT state, telemetry) and pipe live samples into real-time Altara dashboards. JSON / string / binary payloads, topic wildcards, auto-decode.",
   "license": "MIT",
   "type": "commonjs",
   "author": "Jaya Sai Kishan Chapparam",
