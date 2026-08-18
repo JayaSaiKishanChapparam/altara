@@ -241,17 +241,30 @@ JSON / string / binary payload decoding, MQTT topic wildcards (`+`, `#`).
 
 ## Why Altara
 
+Grafana and Foxglove are **applications**; Altara and Recharts are **libraries you
+compile into your own app**. That is the real axis — most of the table follows
+from it.
+
 | | Altara | Grafana | Foxglove | Recharts |
 | --- | --- | --- | --- | --- |
-| Embeds in React app | ✅ Native | ❌ iframe only | ❌ Separate app | ✅ Native |
-| 60fps canvas rendering | ✅ | ❌ SVG | ✅ | ❌ SVG |
-| Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Partial | ❌ |
+| Shape | React library | Server + web app | Desktop / web app | React library |
+| Embeds in React app | ✅ Native | ❌ Iframe embed | ❌ Separate app | ✅ Native |
+| Renders to | Canvas + rAF | Canvas (uPlot) | Canvas / WebGL | SVG |
+| Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Generic gauges/indicators, no flight instruments | ❌ |
 | AV / LiDAR / perception | ✅ Native (Three.js) | ❌ | ✅ Native | ❌ |
 | Industrial / SCADA / HMI | ✅ Native (FFT, OEE, P&ID, alarms) | ⚠️ Plugin | ❌ | ❌ |
 | ROS2 adapter | ✅ Native | ⚠️ Plugin | ✅ Native | ❌ |
 | MQTT adapter | ✅ Native | ⚠️ Plugin | ❌ | ❌ |
-| Bundle size | <30KB gz (core) | Standalone app | Standalone app | ~80KB gz |
-| License | MIT | AGPL | Proprietary | MIT |
+| Alerting, auth, RBAC | ❌ Your app's job | ✅ Built in | ✅ Built in | ❌ |
+| Bundle size | 12.2 KB gz (core) | n/a — separate app | n/a — separate app | 147.9 KB gz |
+| License | MIT | AGPL-3.0 | Proprietary | MIT |
+
+<sub>Rendering is <b>not</b> a differentiator against Grafana — its Time series
+panel renders to canvas via uPlot, same as Altara. The difference is
+architectural: Altara's render loop runs inside your app on data you already
+have, with no server or query round-trip. Sizes measured 2026-08-18 —
+<code>@altara/core@0.2.1</code> via <code>size-limit</code>,
+<code>recharts@3.10.1</code> via bundlephobia.</sub>
 
 ## Documentation
 

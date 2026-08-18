@@ -16,17 +16,23 @@ Grafana is a standalone monitoring platform. Altara is a React component library
 ## Use Altara when
 
 - You're building a custom React application and want telemetry to be **part of the app**, not an iframe in a corner.
-- The data is high-frequency sensor telemetry — IMU, control surfaces, vibration — at rates Grafana's SVG-based panels start to struggle with.
+- The telemetry belongs *inside* a product view — next to the controls that act on it — rather than on a separate dashboard a user navigates to.
 - You need domain-specific components (attitude indicator, GPS map, threshold-aware gauges) that aren't in Grafana's plugin ecosystem.
 - The look and feel needs to match your product's design system — full control over tokens, typography, motion.
 - You're integrating ROS2 or MQTT directly from the browser; Altara ships typed adapters for both.
 
 ## Honest comparison
 
+Rendering technology is **not** the difference. Grafana's Time series panel
+renders to a canvas via uPlot, exactly as Altara does — an earlier version of
+this page claimed Grafana was SVG-based, which was wrong. The real difference
+is architectural, and it is the first two rows below.
+
 | Dimension | Altara | Grafana |
 |---|---|---|
 | **Embeds in a React app** | Yes, one import. | Iframe only — no native React integration. |
-| **60 fps canvas rendering** | Yes — `requestAnimationFrame` + RingBuffer for 1 kHz+ feeds. | SVG-based panels; performance degrades visibly at high frequency. |
+| **Rendering** | Canvas + `requestAnimationFrame`, driven by a `RingBuffer`. | Canvas too — the Time series panel renders via uPlot. Not a differentiator. |
+| **Where the render loop lives** | In your app, on your data, with no query round-trip. | In a Grafana panel, fed by a data-source query on a refresh interval. |
 | **Attitude indicator** | Built in (`@altara/core`). | Not available natively (no robotics-domain panels). |
 | **Aerospace instruments (PFD, HSI, TCAS, TAWS, …)** | Full suite in `@altara/aerospace`. | Not available. |
 | **AV / LiDAR / perception** | Full suite in `@altara/av` — LiDAR (Three.js), occupancy grid, perception graph, SLAM, radar, control trace. | Not available. |
@@ -35,9 +41,9 @@ Grafana is a standalone monitoring platform. Altara is a React component library
 | **Auth, RBAC, sharing** | App's responsibility — Altara is a library, not an app. | Built in. |
 | **Plugin ecosystem** | Focused (telemetry-only) and growing. | Enormous — hundreds of community panels and data sources. |
 | **Setup complexity** | `npm install` + 10 lines. | Separate server, data-source configuration, dashboard provisioning. |
-| **Bundle size** | < 30 KB gzip (core, no peer deps). | Standalone application — not bundled into your app. |
+| **Bundle size** | 12.2 KB gzip (core, no peer deps). | Not applicable — a separate application, not bundled into your app. |
 | **Theming** | CSS custom properties. Fully overridable. | Built-in dark/light + a few themes. |
-| **License** | MIT. | AGPL-3.0 (with Grafana Labs commercial offerings on top). |
+| **License** | MIT. | AGPL-3.0 for Grafana OSS (with Grafana Labs commercial offerings on top). |
 
 ## Stack them together
 
