@@ -1,5 +1,20 @@
 # @altara/demo
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [e9297bc]
+- Updated dependencies [2a168e2]
+- Updated dependencies [90243d5]
+- Updated dependencies [4e586ac]
+- Updated dependencies [0f9ac2c]
+  - @altara/industrial@0.1.3
+  - @altara/core@0.2.2
+  - @altara/aerospace@0.1.4
+  - @altara/ros@0.1.2
+  - @altara/av@0.1.3
+
 ## 0.0.6
 
 ### Patch Changes
