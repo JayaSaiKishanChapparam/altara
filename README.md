@@ -266,6 +266,23 @@ have, with no server or query round-trip. Sizes measured 2026-08-18 —
 <code>@altara/core@0.2.1</code> via <code>size-limit</code>,
 <code>recharts@3.10.1</code> via bundlephobia.</sub>
 
+### The rendering claim, measured
+
+![Per-frame main-thread work vs. widget count — Canvas vs. SVG](https://raw.githubusercontent.com/JayaSaiKishanChapparam/altara/main/docs/assets/canvas-vs-svg-work.png)
+
+Per-frame main-thread work as the number of live widgets grows, on a 2019
+Intel i9-9880H (16 cores) in headed Chromium 147 at 1440×900. All three paths
+draw the identical picture from the identical math, so rendering technology is
+the only variable. At 200 widgets: **Canvas 1.13 ms, imperative SVG 5.18 ms,
+React-driven SVG 10.28 ms** per frame.
+
+Numbers are hardware-specific and the harness says so. Run it yourself, read
+the method and its caveats, or read the raw results:
+**[`scripts/bench/`](scripts/bench/)** ·
+[results-3way-highN.json](scripts/bench/results-3way-highN.json) ·
+[results-3way-cpu6x.json](scripts/bench/results-3way-cpu6x.json) (CPU throttled 6×) ·
+[results-alloc-baseline.json](scripts/bench/results-alloc-baseline.json) ([figure](docs/assets/ringbuffer-alloc.png))
+
 ## Documentation
 
 - **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides, the Cookbook, and Comparisons vs. Grafana / Foxglove.
