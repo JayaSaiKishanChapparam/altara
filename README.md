@@ -283,6 +283,22 @@ the method and its caveats, or read the raw results:
 [results-3way-cpu6x.json](scripts/bench/results-3way-cpu6x.json) (CPU throttled 6×) ·
 [results-alloc-baseline.json](scripts/bench/results-alloc-baseline.json) ([figure](docs/assets/ringbuffer-alloc.png))
 
+## Stability
+
+**Pre-1.0.** Every package is below `1.0.0`, and until one reaches it the public
+API is not considered stable:
+
+- **Patch** (`0.2.1` -> `0.2.2`) — bug fixes, docs, packaging. Safe.
+- **Minor** (`0.2.x` -> `0.3.0`) — new features, and **may include breaking
+  changes**. This is the pre-1.0 semver allowance, not an accident. Pin the
+  minor (`~0.2.0`) if you need that not to happen.
+- Breaking changes are always described in the package's
+  per-package CHANGELOG; anything spanning packages also lands in
+  [MIGRATION.md](MIGRATION.md).
+
+In practice the component APIs have been stable since `0.1.0` and every break so
+far has been in the adapter layer. That is a track record, not a guarantee.
+
 ## Documentation
 
 - **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides, the Cookbook, and Comparisons vs. Grafana / Foxglove.
