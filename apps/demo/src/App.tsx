@@ -36,7 +36,7 @@ export function App() {
         <a
           href="https://github.com/JayaSaiKishanChapparam/altara"
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
         >
           GitHub ↗
         </a>

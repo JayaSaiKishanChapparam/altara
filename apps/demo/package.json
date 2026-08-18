@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "echo 'no lint configured'"
+    "lint": "eslint src --ext .ts,.tsx"
   },
   "dependencies": {
     "@altara/aerospace": "workspace:*",
