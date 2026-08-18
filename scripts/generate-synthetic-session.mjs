@@ -1,6 +1,11 @@
 /**
- * Offline capture: generates the bundled replay fixture for apps/demo's
- * Replay tab.
+ * Generates the bundled **synthetic** session for apps/demo's Replay tab.
+ *
+ * This is not a capture off real hardware and must not be described as one.
+ * It is built from the same `createMockDataSource` generators the live demo
+ * tabs use, then serialised to disk so the Replay tab has something with a
+ * fixed duration to scrub. The output file is named `synthetic-session.json`
+ * to keep that obvious at every call site.
  *
  * This builds the same shape of mock sources the GCS view shows, merges them
  * into one channel-tagged `AltaraDataSource` via `mergeChannels`, drains
@@ -11,10 +16,10 @@
  * `createMockDataSource` synthesise the entire window up-front from the same
  * generators the live path would call. The emitted samples are identical to
  * what a 60-second subscription would have collected, but capture is instant
- * and repeatable. Nothing is recorded from the render path — this is a
+ * and repeatable. Nothing is read from the render path — this is a
  * build-time script, never imported by the app.
  *
- * Usage: node scripts/generate-replay-fixture.mjs
+ * Usage: node scripts/generate-synthetic-session.mjs
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -27,7 +32,7 @@ import {
 } from '../packages/core/dist/index.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT_PATH = resolve(__dirname, '../apps/demo/public/replay/gcs-session.json');
+const OUT_PATH = resolve(__dirname, '../apps/demo/public/replay/synthetic-session.json');
 
 const DURATION_MS = 60_000;
 const DURATION_S = DURATION_MS / 1000;

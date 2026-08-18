@@ -14,7 +14,7 @@ const TABS: { key: ViewKey; label: string; description: string }[] = [
   {
     key: 'replay',
     label: 'Replay',
-    description: 'Recorded session played back through the AltaraDataSource interface',
+    description: 'Synthetic session played back through the AltaraDataSource interface',
   },
   { key: 'core', label: 'Telemetry', description: '@altara/core primitives' },
   { key: 'aerospace', label: 'Drone / Aerospace', description: '@altara/aerospace flight instruments' },
