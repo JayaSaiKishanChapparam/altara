@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import 'leaflet/dist/leaflet.css';
 import '@altara/core/styles.css';
 import { AltaraProvider } from '@altara/core';
 import { App } from './App';
