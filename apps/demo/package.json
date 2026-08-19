@@ -1,8 +1,8 @@
 {
   "name": "@altara/demo",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
-  "description": "Altara live demo app \u2014 multi-package showcase",
+  "description": "Altara live demo app — multi-package showcase",
   "type": "module",
   "scripts": {
     "dev": "vite",
