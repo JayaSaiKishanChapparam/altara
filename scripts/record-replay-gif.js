@@ -7,6 +7,8 @@
  *
  * The choreography below is deliberate, not decoration:
  *
+ *   0. Off camera, and again right after the seek: a small drag on the map,
+ *      which hands auto-follow back to the user (see `releaseMapFollow`).
  *   1. ~4 s of 1x playback   — instruments live, TimeSeries scrolling.
  *   2. Pause, then a real mouse drag of the scrubber *backward* — this is the
  *      money shot: TimeSeries and LiveMap are keyed on `chartEpoch`, so a
@@ -29,6 +31,20 @@
  * 2000x1560, fast enough not to disturb the interaction) and are resampled to
  * an exact 10 fps by nearest timestamp. Static regions then stay bit-identical
  * and compress to nothing.
+ *
+ * ## Why the map gets dragged
+ *
+ * LiveMap auto-follows the tracked asset, so left alone it re-centres on every
+ * telemetry tick and the entire OSM raster resamples between frames. That
+ * defeats the same inter-frame optimisation the screencast path exists to
+ * protect: measured on the previous capture of this clip, the map was 89% of a
+ * 6.3 MB GIF and 55% of the inter-frame pixel churn.
+ *
+ * A user drag disengages auto-follow, which is what makes the map hold still.
+ * That only started working in @altara/core 0.2.3 — before it, the handler was
+ * passed to `<MapContainer>` as `eventHandlers`, which react-leaflet forwards
+ * to layers only, so it never fired. Recording this clip against an older core
+ * will silently produce the churny 6 MB version again.
  *
  * The session is SYNTHETIC (scripts/generate-synthetic-session.mjs). Nothing
  * here is a real flight and nothing should be captioned as one.
@@ -94,6 +110,34 @@ async function dragScrubber(page, range, fraction, steps = 14) {
   await page.mouse.up();
 }
 
+/**
+ * Hand the map back to the user, the way a user would: a real drag.
+ *
+ * Goes out and comes straight back, so the view ends up exactly where it
+ * started — but Leaflet still fires `dragstart` on the way out, which is what
+ * LiveMap listens for. The move has to clear Leaflet's 3px click tolerance to
+ * count as a drag at all.
+ *
+ * The pause before mouseup is load-bearing: Leaflet's drag inertia would
+ * otherwise keep gliding the map after release, which is precisely the churn
+ * this is here to stop. Holding still for longer than its 50 ms velocity
+ * window leaves it with no measurable speed to coast on.
+ *
+ * Grabs a point off-centre so it misses the zoom control (top left), the
+ * marker (centre) and the attribution (bottom right).
+ */
+async function releaseMapFollow(page) {
+  const box = await page.locator('.leaflet-container').first().boundingBox();
+  const x = box.x + box.width * 0.72;
+  const y = box.y + box.height * 0.32;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 14, y, { steps: 4 });
+  await page.mouse.move(x, y, { steps: 4 });
+  await sleep(220);
+  await page.mouse.up();
+}
+
 async function main() {
   try {
     execSync('which ffmpeg', { stdio: 'ignore' });
@@ -136,6 +180,7 @@ async function main() {
     { timeout: 20_000 },
   );
   await sleep(8000);
+  await releaseMapFollow(page);
 
   // ── Capture ─────────────────────────────────────────────────────────────
   const frames = [];
@@ -173,6 +218,10 @@ async function main() {
   await dragScrubber(page, range, SCRUB_TO_FRACTION);
   mark('scrubEnd');
   const scrubbedTo = Number(await range.inputValue());
+  // ReplayView keys LiveMap on `chartEpoch`, which a backward seek bumps — so
+  // the map has just remounted with a fresh `follow: true`. Take it over again
+  // before resuming, or the 2x segment churns exactly like the 1x one would.
+  await releaseMapFollow(page);
   await sleep(1600);
 
   mark('speed2x');
