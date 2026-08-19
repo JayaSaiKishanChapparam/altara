@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { LiveMapGeofence, LiveMapProps } from '../../adapters/types';
 
 interface ReactLeafletModule {
@@ -8,6 +8,7 @@ interface ReactLeafletModule {
   Circle: React.ComponentType<Record<string, unknown>>;
   Marker: React.ComponentType<Record<string, unknown>>;
   useMap: () => { setView: (latlng: [number, number], zoom?: number) => void };
+  useMapEvents: (handlers: Record<string, (...args: unknown[]) => void>) => unknown;
 }
 
 interface LeafletModule {
@@ -75,6 +76,34 @@ function AutoFollow({ position, follow, useMap }: AutoFollowProps) {
   useEffect(() => {
     if (follow && position) map.setView(position);
   }, [follow, position, map]);
+  return null;
+}
+
+interface DisengageFollowProps {
+  onDisengage: () => void;
+  useMapEvents: ReactLeafletModule['useMapEvents'];
+}
+
+/**
+ * Hands auto-follow back to the user on their first navigation gesture.
+ *
+ * These have to be bound from *inside* the map, not as an `eventHandlers`
+ * prop on `<MapContainer>`: react-leaflet forwards `eventHandlers` to layers
+ * only (Marker, Polyline, ...), so a handler passed to MapContainer is
+ * silently dropped and never fires.
+ *
+ * Only user gestures are listened for. `dragstart` is never fired by
+ * AutoFollow's programmatic `setView`, and neither is `zoomstart`: `setView`
+ * with no zoom argument reuses the current zoom, and Leaflet fires
+ * `zoomstart` only when the zoom level actually changes. So following can't
+ * disengage itself.
+ */
+function DisengageFollow({ onDisengage, useMapEvents }: DisengageFollowProps) {
+  const handlers = useMemo(
+    () => ({ dragstart: onDisengage, zoomstart: onDisengage }),
+    [onDisengage],
+  );
+  useMapEvents(handlers);
   return null;
 }
 
@@ -166,8 +195,9 @@ export function LiveMap({
     });
   }, [loaded, effectiveHeading]);
 
-  // Disable auto-follow once the user manually drags the map.
-  const handleDragStart = () => setFollow(false);
+  // Disable auto-follow once the user takes the map over themselves.
+  // Bound to the map instance by <DisengageFollow>, below.
+  const handleUserNavigate = useCallback(() => setFollow(false), []);
 
   if (loadError) {
     return (
@@ -193,7 +223,8 @@ export function LiveMap({
     );
   }
 
-  const { MapContainer, TileLayer, Polyline, Circle, Marker, useMap } = loaded.rl;
+  const { MapContainer, TileLayer, Polyline, Circle, Marker, useMap, useMapEvents } =
+    loaded.rl;
   const positions = trackRef.current.slice();
   const initialCenter: [number, number] = currentPosition ?? [37.7749, -122.4194];
 
@@ -209,7 +240,6 @@ export function LiveMap({
         scrollWheelZoom
         className="vt-live-map__inner"
         whenReady={() => setFollow(true)}
-        eventHandlers={{ dragstart: handleDragStart }}
       >
         <TileLayer attribution="© OpenStreetMap" url={DEFAULT_TILES_URL} />
         {positions.length > 1 ? <Polyline positions={positions} color="#378ADD" /> : null}
@@ -225,6 +255,7 @@ export function LiveMap({
           <Marker position={currentPosition} icon={headingIcon} />
         ) : null}
         <AutoFollow position={currentPosition} follow={follow} useMap={useMap} />
+        <DisengageFollow onDisengage={handleUserNavigate} useMapEvents={useMapEvents} />
       </MapContainer>
     </div>
   );
