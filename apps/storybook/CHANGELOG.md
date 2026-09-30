@@ -1,5 +1,19 @@
 # @altara/storybook
 
+## 0.0.10
+
+### Patch Changes
+
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+  - @altara/core@0.3.0
+  - @altara/industrial@1.0.0
+  - @altara/ros@1.0.0
+  - @altara/aerospace@1.0.0
+  - @altara/av@1.0.0
+
 ## 0.0.9
 
 ### Patch Changes

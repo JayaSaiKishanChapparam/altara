@@ -1,6 +1,6 @@
 {
   "name": "@altara/av",
-  "version": "0.1.3",
+  "version": "1.0.0",
   "description": "Autonomous-vehicle React components for Altara — LiDAR point cloud (Three.js), occupancy grid, object-detection overlay, path planner, camera feed, control trace, radar sweep, perception state machine, sensor health matrix, SLAM map.",
   "license": "MIT",
   "type": "commonjs",
@@ -71,7 +71,7 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "@altara/core": "^0.2.0",
+    "@altara/core": "^0.3.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },

@@ -1,5 +1,99 @@
 # @altara/core
 
+## 0.3.0
+
+### Minor Changes
+
+- ca4c09b: Export `WORKER_SOURCE`, the worker body as source text.
+
+  `createWorkerDataSource` spawns its worker from a Blob URL built out of this
+  string. It was module-internal, which meant the pipeline could not be inspected,
+  driven deterministically in a test, or reconstructed by a host that cannot use
+  Blob URLs — a strict CSP or some Electron configurations, for instance. Paired
+  with the existing `workerImpl` option it is now possible to run the genuine
+  worker body against a socket you control.
+
+  Documented in the README as a low-level escape hatch rather than the main path.
+  The contents of the string are an implementation detail and will change; what is
+  stable is that evaluating it in a worker scope installs the message handler
+  `createWorkerDataSource` speaks to.
+
+- ca4c09b: Support several independent viewports per decimating source.
+
+  `AltaraDataSource.decimator` previously carried one viewport, so two charts on
+  the same worker-backed source overwrote each other's `setViewport` call. Last
+  writer won, the other chart rendered an empty plot, and nothing errored — the
+  most obvious way to use the feature failed silently.
+
+  `Decimator` is now `acquire(): DecimatorSubscription`. Each consumer holds its
+  own viewport, epoch, send credit, and latest frame, and calls `release()` when it
+  goes away. `TimeSeries` and `MultiAxisPlot` acquire one per render loop. The
+  worker keys viewports by id and serves each from the same per-channel ring
+  buffers, so N charts on one source cost one extra decimation pass each and no
+  extra memory or ingest — one socket, one set of buffers.
+
+  Credit is per viewport: a stalled consumer no longer blocks frames to the
+  others. `destroy()` invalidates outstanding handles so a chart still holding one
+  cannot keep drawing from a dead source.
+
+  This reshapes `Decimator`, which was added but never released, so no published
+  API changes. `DecimatorSubscription` is exported alongside it.
+
+  Covered by tests for two and three charts sharing one source — the case that had
+  no coverage, which is why the single-viewport limitation shipped.
+
+- ca4c09b: Move min/max decimation off the main thread.
+
+  `createWorkerDataSource` now owns the per-channel ring buffers and the min/max
+  reduction, and pushes render-ready geometry to the renderer. `TimeSeries` and
+  `MultiAxisPlot` feature-detect the new optional `AltaraDataSource.decimator`:
+  when it is present they never touch a raw sample, so per-frame main-thread work
+  drops from O(samples buffered) to O(pixel columns). Previously each frame copied
+  every ring buffer, scanned it for the y-extent, and bucketed it again — three
+  O(n) passes per channel at 60 Hz.
+
+  The protocol is push-based rather than request/response, because the time window
+  is wall-clock anchored and so advances every frame on its own. The renderer
+  sends a viewport only when the plot width, window, or channel list actually
+  changes; the worker derives the window itself and flushes frames at `flushHz`.
+  Frames carry an epoch so geometry decimated for a superseded viewport is never
+  drawn, and the worker keeps at most one unacknowledged frame in flight, skipping
+  flushes rather than queueing them when the main thread stalls. Frames are whole
+  snapshots, never deltas, so a dropped one is always safe.
+
+  Additive and opt-in. `decimator` is optional, so every other adapter — mock,
+  replay, rosbridge, MQTT — is unchanged and charts fall back to the existing local
+  path. Raw `subscribe`/`getHistory` delivery is untouched, so `Gauge`,
+  `SignalPanel`, and `Attitude` behave exactly as before. Note that `bufferSize` on
+  the chart is ignored for decimating sources; capacity belongs to the worker.
+
+  The worker body is now real linted and unit-tested source (`workerBody.ts`),
+  compiled to the embedded `WORKER_SOURCE` string at build time, so `RingBuffer`
+  and the decimation kernels have a single implementation instead of a copy
+  maintained by hand inside a template literal.
+
+### Patch Changes
+
+- ca4c09b: Document the worker pipeline and correct several stale README claims.
+
+  `@altara/core` gains a section on `createWorkerDataSource`: per-channel ring
+  buffers and min/max decimation in the worker, data-space frames carrying each
+  channel's extent, the epoch plus single-credit push protocol, the `decimator`
+  capability and how charts feature-detect it, several viewports per source via
+  `acquire()`, and the two gotchas (`bufferSize` is ignored for decimating sources;
+  `mergeChannels` exposes no decimator).
+
+  `@altara/industrial` previously suggested offloading `WaterfallSpectrogram`'s FFT
+  "via `createWorkerDataSource`". That API cannot do it — it moves socket ingest,
+  buffering, and decimation into its worker, not arbitrary component work. The
+  advice now says to compute the spectrum upstream instead.
+
+  `@altara/ros` and `@altara/mqtt` state plainly that their sources expose no
+  `decimator` and therefore use the main-thread render path.
+
+  Core's stated bundle size was 12.2 KB against a measured 14.4 KB; corrected, with
+  the version and date it was measured at.
+
 ## 0.2.3
 
 ### Patch Changes
