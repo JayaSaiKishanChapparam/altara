@@ -1,5 +1,62 @@
 # @altara/demo
 
+## 0.0.9
+
+### Patch Changes
+
+- ca4c09b: Point the Worker Pipeline tab at one shared worker, and fix two dead CSS tokens.
+
+  With several viewports now supported per source, both charts and the stats panel
+  read one `createWorkerDataSource` instead of needing a worker each. The panel's
+  counters come from its own third viewport, which is labelled as such.
+
+  The inbound-rate counter divided by an assumed 1000 ms tick. A backgrounded tab
+  throttles timers, so it reported rates several times higher than the feed was
+  delivering; it now divides by the interval that actually elapsed and says "tab
+  inactive" when animation frames are not running at all rather than showing a
+  stale figure.
+
+  `CoreView` and `styles.css` referenced `--vt-data-danger`, `--vt-data-warn`, and
+  `--vt-data-active`. Those tokens do not exist — the palette is `--vt-color-*` —
+  so the gauge arc rendered grey and the selected-tab underline fell back to the
+  text colour.
+
+  Adds `scripts/measure-worker-path.mjs` (`pnpm --filter @altara/demo measure`),
+  which drives both decimation paths and prints the spread across repeated
+  samples.
+
+- ca4c09b: Add a Worker Pipeline tab driven by a real socket, and stop the status strip
+  reporting a fake message rate.
+
+  The new tab is the first consumer of `createWorkerDataSource` and the
+  `decimator` capability. A synthetic quadrotor feed (scripts/telemetry-server.mjs,
+  mounted on the Vite dev and preview servers) streams ~5,000 samples/s across
+  seven channels; the charts render it with decimation running in the worker. A
+  toggle swaps the same live data onto the local decimation path so the two can be
+  compared, and the panel above reports measured values — inbound rate, samples
+  behind the plot, bucket columns, frame epoch and sequence, frame pacing — read
+  from the source rather than hardcoded.
+
+  The signal is a small flight model rather than sine waves, specifically so it
+  produces the short transients min/max decimation exists to preserve.
+
+  `ConnectionBar` on the other tabs previously showed `ws://demo.altara.dev:9090`
+  at `284 msg/s` with 14 ms latency, none of which was real. Those tabs run on
+  in-browser generators, so the strip now reads `mock://in-browser-generators`
+  with no latency or rate. The Worker Pipeline tab renders its own strip with the
+  actual URL, connection state, and measured sample rate; with no server reachable
+  it shows Disconnected and explains how to start one instead of showing data.
+
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+- Updated dependencies [ca4c09b]
+  - @altara/core@0.3.0
+  - @altara/industrial@1.0.0
+  - @altara/ros@1.0.0
+  - @altara/aerospace@1.0.0
+  - @altara/av@1.0.0
+
 ## 0.0.8
 
 ### Patch Changes
