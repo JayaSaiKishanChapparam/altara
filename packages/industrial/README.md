@@ -87,7 +87,15 @@ export function FactoryFloor() {
 
 ## FFT performance
 
-`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT on the main thread. Cost grows with `fftSize` and `scrollRate`, so if a large transform at a high scroll rate starts costing you frames, push the work into a Web Worker via [`createWorkerDataSource`](https://www.npmjs.com/package/@altara/core) from `@altara/core`. Profile against your own hardware and settings rather than assuming a threshold.
+`WaterfallSpectrogram` runs an inline radix-2 Cooley-Tukey FFT on the main
+thread. Cost grows with `fftSize` and `scrollRate`.
+
+If a large transform at a high scroll rate starts costing you frames, compute the
+spectrum upstream — in a worker you own, or on the producer — and feed the
+component the result. `createWorkerDataSource` from `@altara/core` will **not**
+offload this: it moves socket ingest, ring buffering, and min/max decimation into
+its worker, but the FFT belongs to this component and stays where it is. Profile
+against your own hardware and settings rather than assuming a threshold.
 
 ## Data sources
 

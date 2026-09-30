@@ -1,12 +1,18 @@
 import { useEffect, useMemo, useRef } from 'react';
-import type { TelemetryValue, TimeSeriesChannel, TimeSeriesProps } from '../../adapters/types';
+import type {
+  DecimatedChannel,
+  TelemetryValue,
+  TimeSeriesChannel,
+  TimeSeriesProps,
+} from '../../adapters/types';
 import { RingBuffer } from '../../utils/RingBuffer';
 import { buildMinMaxBuckets, countVisibleSamples } from '../../utils/minMaxDecimation';
 import { sineWave } from '../../utils/mockData';
 
 interface ChannelState {
   channel: TimeSeriesChannel;
-  buffer: RingBuffer;
+  /** Local sample store. `null` when the source decimates in its worker. */
+  buffer: RingBuffer | null;
   color: string;
 }
 
@@ -18,6 +24,15 @@ const DEFAULT_PALETTE = [
   '#9E7CD5',
   '#3FBFB5',
 ];
+
+// Hoisted so the resize handler can derive the same plot width the draw pass
+// uses — the worker buckets per pixel column, so it has to be told that width.
+const PAD_LEFT = 36;
+const PAD_RIGHT = 12;
+const PAD_TOP = 12;
+const PAD_BOTTOM = 22;
+
+const plotWidthFor = (cssWidth: number) => Math.max(cssWidth - PAD_LEFT - PAD_RIGHT, 1);
 
 interface ThemeTokens {
   bgPanel: string;
@@ -51,6 +66,17 @@ function formatRelativeTime(deltaMs: number): string {
  * High-frequency Canvas chart. The render loop runs in requestAnimationFrame
  * and reads design tokens via getComputedStyle every frame so theme changes
  * propagate without React re-rendering the hot path (blueprint §4.2 / §13).
+ *
+ * Two data paths:
+ *  - **Decimating source** (`dataSource.decimator`, e.g. `createWorkerDataSource`):
+ *    the worker owns the ring buffers and the min/max reduction and hands back
+ *    render-ready geometry. This component never sees a raw sample, so per-frame
+ *    work is O(pixel columns) rather than O(samples buffered).
+ *  - **Everything else** (mock, replay, rosbridge, MQTT): unchanged — buffer
+ *    locally and decimate in the draw pass.
+ *
+ * Note that with a decimating source the `bufferSize` prop is ignored; capacity
+ * is whatever the worker was configured with.
  */
 export function TimeSeries({
   dataSource,
@@ -68,6 +94,8 @@ export function TimeSeries({
   const rafRef = useRef<number | null>(null);
   const lastDrawRef = useRef(0);
 
+  const decimator = dataSource?.decimator ?? null;
+
   // Resolve channels (default = single anonymous channel) and freeze the buffer
   // identity across renders so the rAF loop reads from the same memory.
   const channelStates = useMemo<ChannelState[]>(() => {
@@ -75,21 +103,23 @@ export function TimeSeries({
       channels && channels.length > 0 ? channels : [{ key: 'default', label: 'value' }];
     return list.map((c, i) => ({
       channel: c,
-      buffer: new RingBuffer(bufferSize),
+      // Skip the allocation entirely when the worker is doing the buffering.
+      buffer: decimator ? null : new RingBuffer(bufferSize),
       color: c.color ?? DEFAULT_PALETTE[i % DEFAULT_PALETTE.length]!,
     }));
     // We deliberately ignore changes to bufferSize after mount to keep buffers stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(channels?.map((c) => c.key) ?? [])]);
+  }, [JSON.stringify(channels?.map((c) => c.key) ?? []), decimator]);
 
-  // Subscribe to the upstream data source.
+  // Subscribe to the upstream data source. Skipped for decimating sources —
+  // pulling every sample onto the main thread is exactly what they avoid.
   useEffect(() => {
-    if (!dataSource) return;
+    if (!dataSource || decimator) return;
     const byKey = new Map(channelStates.map((cs) => [cs.channel.key, cs]));
     const fallback = channelStates[0];
     const handle = (v: TelemetryValue) => {
       const target = v.channel ? byKey.get(v.channel) : fallback;
-      if (!target) return;
+      if (!target?.buffer) return;
       target.buffer.push(v.value, v.timestamp);
     };
     for (const v of dataSource.getHistory()) handle(v);
@@ -97,7 +127,7 @@ export function TimeSeries({
     return () => {
       off();
     };
-  }, [dataSource, channelStates]);
+  }, [dataSource, channelStates, decimator]);
 
   // mockMode: feed each channel its own sineWave so the chart shows multiple lines.
   useEffect(() => {
@@ -106,7 +136,7 @@ export function TimeSeries({
     const id = setInterval(
       () => {
         const t = Date.now();
-        channelStates.forEach((cs, i) => cs.buffer.push(generators[i]!(t), t));
+        channelStates.forEach((cs, i) => cs.buffer?.push(generators[i]!(t), t));
       },
       1000 / Math.max(fps, 30),
     );
@@ -123,20 +153,37 @@ export function TimeSeries({
     if (!ctx) return;
 
     const frameInterval = 1000 / Math.max(fps, 1);
+    const channelKeys = channelStates.map((cs) => cs.channel.key);
 
     // Reusable per-channel scratch buffers. The ring buffers are read once per
     // frame into these instead of allocating a fresh Float64Array per read —
     // getValues()/getTimes() allocate, readInto() does not, so the hot path
-    // stays zero-allocation (blueprint §13: GC-induced jank).
-    const scratch = channelStates.map(() => ({
-      values: new Float64Array(bufferSize),
-      times: new Float64Array(bufferSize),
-      bucketMinY: new Float64Array(bufferSize),
-      bucketMaxY: new Float64Array(bufferSize),
-      bucketSeen: new Uint8Array(bufferSize),
-      bucketTouched: new Uint32Array(bufferSize),
-      len: 0,
-    }));
+    // stays zero-allocation (blueprint §13: GC-induced jank). Unused, and so
+    // not allocated, when the worker supplies decimated geometry.
+    const scratch = decimator
+      ? []
+      : channelStates.map(() => ({
+          values: new Float64Array(bufferSize),
+          times: new Float64Array(bufferSize),
+          bucketMinY: new Float64Array(bufferSize),
+          bucketMaxY: new Float64Array(bufferSize),
+          bucketSeen: new Uint8Array(bufferSize),
+          bucketTouched: new Uint32Array(bufferSize),
+          len: 0,
+        }));
+
+    // Each chart owns its own subscription, so two charts sharing a source do
+    // not overwrite each other's channel set or plot width.
+    const view = decimator ? decimator.acquire() : null;
+
+    const publishViewport = () => {
+      if (!view) return;
+      view.setViewport({
+        channels: channelKeys,
+        windowMs,
+        plotW: plotWidthFor(container.clientWidth),
+      });
+    };
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
@@ -148,6 +195,9 @@ export function TimeSeries({
       canvas.style.width = `${cssWidth}px`;
       canvas.style.height = `${cssHeight}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Bucket columns are CSS pixels, so the worker is told the CSS width.
+      // setViewport ignores unchanged specs, so calling it per resize is cheap.
+      publishViewport();
     };
 
     resize();
@@ -167,33 +217,45 @@ export function TimeSeries({
       ctx.fillStyle = tokens.bgPanel;
       ctx.fillRect(0, 0, cssWidth, cssHeight);
 
-      const padLeft = 36;
-      const padRight = 12;
-      const padTop = 12;
-      const padBottom = 22;
-      const plotW = Math.max(cssWidth - padLeft - padRight, 1);
-      const plotH = Math.max(cssHeight - padTop - padBottom, 1);
+      const padLeft = PAD_LEFT;
+      const padTop = PAD_TOP;
+      const plotW = plotWidthFor(cssWidth);
+      const plotH = Math.max(cssHeight - PAD_TOP - PAD_BOTTOM, 1);
 
       const wallNow = Date.now();
       const tMin = wallNow - windowMs;
 
-      // Single read per channel per frame — feeds both the extent pass and the
-      // draw pass below from the same snapshot, with zero allocation.
-      for (let c = 0; c < channelStates.length; c++) {
-        const s = scratch[c]!;
-        s.len = channelStates[c]!.buffer.readInto(s.values);
-        channelStates[c]!.buffer.readTimesInto(s.times);
+      const frame = view ? view.getFrame() : null;
+      const byKey = new Map<string, DecimatedChannel>();
+      if (frame) for (const fc of frame.channels) byKey.set(fc.key, fc);
+
+      if (!decimator) {
+        // Single read per channel per frame — feeds both the extent pass and the
+        // draw pass below from the same snapshot, with zero allocation.
+        for (let c = 0; c < channelStates.length; c++) {
+          const s = scratch[c]!;
+          s.len = channelStates[c]!.buffer!.readInto(s.values);
+          channelStates[c]!.buffer!.readTimesInto(s.times);
+        }
       }
 
       // Find y-extent across all channels in the visible window.
       let yMin = Infinity;
       let yMax = -Infinity;
-      for (const s of scratch) {
-        for (let i = 0; i < s.len; i++) {
-          if (s.times[i]! < tMin) continue;
-          const v = s.values[i]!;
-          if (v < yMin) yMin = v;
-          if (v > yMax) yMax = v;
+      if (decimator) {
+        for (const fc of byKey.values()) {
+          if (!fc.extent) continue;
+          if (fc.extent.min < yMin) yMin = fc.extent.min;
+          if (fc.extent.max > yMax) yMax = fc.extent.max;
+        }
+      } else {
+        for (const s of scratch) {
+          for (let i = 0; i < s.len; i++) {
+            if (s.times[i]! < tMin) continue;
+            const v = s.values[i]!;
+            if (v < yMin) yMin = v;
+            if (v > yMax) yMax = v;
+          }
         }
       }
       if (thresholds) {
@@ -268,11 +330,39 @@ export function TimeSeries({
       // Channels.
       for (let c = 0; c < channelStates.length; c++) {
         const cs = channelStates[c]!;
-        const s = scratch[c]!;
-        if (s.len === 0) continue;
         ctx.strokeStyle = cs.color;
         ctx.lineWidth = 1.5;
         ctx.beginPath();
+
+        if (decimator) {
+          const fc = byKey.get(cs.channel.key);
+          if (!fc || fc.visibleCount === 0 || !frame) continue;
+          // Geometry is drawn in the frame's own coordinate space, rescaled to
+          // the current plot box. In the steady state the two are identical; on
+          // the frame after a resize this stretches the last good geometry to
+          // fit rather than blanking the plot for a tick.
+          const xScale = plotW / frame.plotW;
+          if (fc.mode === 'buckets' && fc.bucket && fc.minV && fc.maxV) {
+            for (let i = 0; i < fc.bucket.length; i++) {
+              const x = padLeft + (fc.bucket[i]! + 0.5) * xScale;
+              ctx.moveTo(x, yFor(fc.minV[i]!));
+              ctx.lineTo(x, yFor(fc.maxV[i]!));
+            }
+            ctx.stroke();
+          } else if (fc.pointT && fc.pointV) {
+            for (let i = 0; i < fc.pointT.length; i++) {
+              const x = padLeft + ((fc.pointT[i]! - frame.tMin) / frame.windowMs) * plotW;
+              const y = yFor(fc.pointV[i]!);
+              if (i === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+          }
+          continue;
+        }
+
+        const s = scratch[c]!;
+        if (s.len === 0) continue;
         const visibleCount = countVisibleSamples(s.times, s.len, tMin);
         if (visibleCount > Math.ceil(plotW)) {
           const touchedCount = buildMinMaxBuckets(
@@ -338,11 +428,12 @@ export function TimeSeries({
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
       ro.disconnect();
+      view?.release();
     };
     // bufferSize is fixed for the component lifetime (see channelStates memo);
     // the scratch buffers are sized once at mount and intentionally not a dep.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [channelStates, windowMs, thresholds, fps]);
+  }, [channelStates, windowMs, thresholds, fps, decimator]);
 
   const ariaLabel = channelStates.map((cs) => cs.channel.label).join(', ') || 'time series';
   return (

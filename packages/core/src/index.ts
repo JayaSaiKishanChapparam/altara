@@ -28,6 +28,9 @@ export { createMqttAdapter } from './adapters/mqtt';
 export type { MqttAdapterOptions, MqttClientLike } from './adapters/mqtt';
 export { createWorkerDataSource } from './adapters/worker';
 export type { CreateWorkerDataSourceOptions, WorkerLike } from './adapters/worker';
+// Low-level: the worker body as source text. See the README's "Advanced" note —
+// this is an escape hatch for tests and custom hosts, not the main path.
+export { WORKER_SOURCE } from './adapters/worker';
 export { mergeChannels } from './adapters/mergeChannels';
 
 // ── Utilities ────────────────────────────────────────────
@@ -63,4 +66,9 @@ export type {
   DashboardItem,
   DashboardLayoutProps,
   WorkerPipelineOptions,
+  Decimator,
+  DecimatorSubscription,
+  DecimatedFrame,
+  DecimatedChannel,
+  ViewportSpec,
 } from './adapters/types';

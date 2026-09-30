@@ -84,8 +84,8 @@ export function CoreView() {
             unit="%"
             size="md"
             thresholds={[
-              { value: 20, color: 'var(--vt-data-danger)' },
-              { value: 40, color: 'var(--vt-data-warn)' },
+              { value: 20, color: 'var(--vt-color-danger)' },
+              { value: 40, color: 'var(--vt-color-warn)' },
             ]}
           />
         </div>

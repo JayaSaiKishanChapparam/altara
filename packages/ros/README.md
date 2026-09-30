@@ -182,6 +182,15 @@ Then open **Guides → Connecting ROS2**.
 - [Discussions](https://github.com/JayaSaiKishanChapparam/altara/discussions)
 - [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite) — the WebSocket server you're connecting to
 
+## Rendering path
+
+Sources from this package are ordinary `AltaraDataSource`s: they expose no
+`decimator`, so charts buffer and decimate them on the main thread, which is the
+default path and unchanged. Off-main-thread decimation is specific to
+`createWorkerDataSource`, whose worker owns the socket as well as the buffers —
+see [`@altara/core`](https://www.npmjs.com/package/@altara/core) for when that is
+worth reaching for.
+
 ## Stability
 
 **Pre-1.0.** Every package is below `1.0.0`, and until one reaches it the public

@@ -87,7 +87,7 @@ body {
 
 .demo-tab[aria-selected='true'] {
   color: var(--vt-text-primary);
-  border-bottom-color: var(--vt-data-active);
+  border-bottom-color: var(--vt-color-active);
 }
 
 .demo-view {
@@ -127,6 +127,36 @@ body {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+/* Live counters on the Worker Pipeline tab. Values are measured, not static,
+   so the numbers are tabular to stop them jittering as digits change. */
+.demo-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px 16px;
+  margin: 16px 0 0;
+}
+
+.demo-stat dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--vt-text-secondary);
+  margin: 0 0 4px;
+}
+
+.demo-stat dd {
+  margin: 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--vt-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+.demo-stat__unit {
+  font-size: 12px;
+  color: var(--vt-text-secondary);
+  margin-left: 3px;
 }
 
 @media (max-width: 900px) {
