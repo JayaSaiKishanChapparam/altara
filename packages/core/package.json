@@ -1,7 +1,7 @@
 {
   "name": "@altara/core",
   "version": "0.2.3",
-  "description": "React components for real-time telemetry dashboards — canvas-rendered time-series, gauges, attitude indicators, GPS maps, signal panels, and event logs for robotics, aerospace, autonomous vehicles, and industrial IoT.",
+  "description": "React components for real-time telemetry dashboards \u2014 canvas-rendered time-series, gauges, attitude indicators, GPS maps, signal panels, and event logs for robotics, aerospace, autonomous vehicles, and industrial IoT.",
   "license": "MIT",
   "type": "commonjs",
   "author": "Jaya Sai Kishan Chapparam",
@@ -71,11 +71,12 @@
     "**/*.css"
   ],
   "scripts": {
-    "build": "tsup && cp src/tokens/tokens.css dist/tokens.css && node ../../scripts/add-use-client.mjs",
+    "build": "node scripts/generate-worker-source.mjs && tsup && cp src/tokens/tokens.css dist/tokens.css && node ../../scripts/add-use-client.mjs",
     "dev": "tsup --watch",
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:worker": "node scripts/generate-worker-source.mjs"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -102,9 +103,10 @@
     "@testing-library/react": "^15.0.5",
     "@types/leaflet": "^1.9.8",
     "@types/react": "^18.3.0",
-    "@types/react-grid-layout": "^1.3.5",
     "@types/react-dom": "^18.3.0",
+    "@types/react-grid-layout": "^1.3.5",
     "@vitest/coverage-v8": "^1.5.0",
+    "esbuild": "^0.21.5",
     "happy-dom": "^14.7.1",
     "leaflet": "^1.9.4",
     "react": "^18.3.0",

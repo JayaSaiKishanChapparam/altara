@@ -111,7 +111,7 @@ What that does and doesn't cover:
 | `MultiAxisPlot` | Dual-Y-axis time-series chart. |
 | `DashboardLayout` | `react-grid-layout` integration for draggable / resizable panels. |
 
-Plus `createWorkerDataSource` (moves the WebSocket ingest path off the main thread for high-rate feeds), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
+Plus `createWorkerDataSource` (moves ingest, ring buffering, **and** min/max decimation off the main thread — see [below](#the-worker-pipeline)), `createMqttAdapter`, and `createMockDataSource` for synthetic feeds.
 
 ### `@altara/aerospace` — flight instruments
 
@@ -249,22 +249,29 @@ from it.
 | --- | --- | --- | --- | --- |
 | Shape | React library | Server + web app | Desktop / web app | React library |
 | Embeds in React app | ✅ Native | ❌ Iframe embed | ❌ Separate app | ✅ Native |
-| Renders to | Canvas + rAF | Canvas (uPlot) | Canvas / WebGL | SVG |
+| Renders to | Canvas + rAF for charts; SVG for gauges/indicators | Canvas (uPlot) | Canvas / WebGL | SVG |
 | Aerospace instruments | ✅ Full suite (PFD/HSI/TCAS…) | ❌ | ⚠️ Generic gauges/indicators, no flight instruments | ❌ |
 | AV / LiDAR / perception | ✅ Native (Three.js) | ❌ | ✅ Native | ❌ |
 | Industrial / SCADA / HMI | ✅ Native (FFT, OEE, P&ID, alarms) | ⚠️ Plugin | ❌ | ❌ |
 | ROS2 adapter | ✅ Native | ⚠️ Plugin | ✅ Native | ❌ |
 | MQTT adapter | ✅ Native | ⚠️ Plugin | ❌ | ❌ |
 | Alerting, auth, RBAC | ❌ Your app's job | ✅ Built in | ✅ Built in | ❌ |
-| Bundle size | 12.2 KB gz (core) | n/a — separate app | n/a — separate app | 147.9 KB gz |
+| Usable without writing code | ❌ You build the UI | ✅ Point at a datasource | ✅ Open a file / connect | ❌ |
+| Recording + replay of sessions | ❌ Not in the library | ⚠️ Via stored backend | ✅ MCAP/ROS bag, native | ❌ |
+| Historical / stored data | ❌ Live sources only | ✅ Core capability | ✅ Log files | ❌ |
+| 3D scene graph & point clouds | ⚠️ Three.js panels in `av` | ❌ | ✅ Deeper and more mature | ❌ |
+| Plugin / integration ecosystem | ❌ None | ✅ Large | ⚠️ Extensions | ❌ |
+| Bundle size | 14.4 KB gz (core) | n/a — separate app | n/a — separate app | 147.9 KB gz |
 | License | MIT | AGPL-3.0 | Proprietary | MIT |
 
 <sub>Rendering is <b>not</b> a differentiator against Grafana — its Time series
 panel renders to canvas via uPlot, same as Altara. The difference is
 architectural: Altara's render loop runs inside your app on data you already
-have, with no server or query round-trip. Sizes measured 2026-08-18 —
-<code>@altara/core@0.2.1</code> via <code>size-limit</code>,
-<code>recharts@3.10.1</code> via bundlephobia.</sub>
+have, with no server or query round-trip. If you want a dashboard without
+writing a React app, or you need recording, stored history, or a mature 3D
+viewer, Grafana and Foxglove are the better tools and the rows above say so.
+Altara core measured 2026-09-30 (<code>@altara/core@0.2.3</code>, <code>size-limit</code>);
+<code>recharts@3.10.1</code> via bundlephobia 2026-08-18.</sub>
 
 ### The rendering claim, measured
 
@@ -282,6 +289,75 @@ the method and its caveats, or read the raw results:
 [results-3way-highN.json](scripts/bench/results-3way-highN.json) ·
 [results-3way-cpu6x.json](scripts/bench/results-3way-cpu6x.json) (CPU throttled 6×) ·
 [results-alloc-baseline.json](scripts/bench/results-alloc-baseline.json) ([figure](docs/assets/ringbuffer-alloc.png))
+
+## The worker pipeline
+
+For feeds fast enough that the render loop becomes the bottleneck,
+`createWorkerDataSource` moves the whole pre-paint stage off the main thread. The
+worker owns the WebSocket, a `RingBuffer` per channel, and the min/max reduction;
+the renderer receives per-column min/max in data space plus each channel's extent
+and does nothing but project and stroke.
+
+The protocol is push, not request/response. The visible window is wall-clock
+anchored, so it advances by itself every frame — the renderer sends a viewport
+only when plot width, window length, or the channel list actually changes, and
+the worker derives the rest. Frames carry an epoch so geometry decimated for a
+superseded viewport is never drawn, and the worker keeps at most one
+unacknowledged frame in flight, skipping flushes rather than queueing them when
+the main thread stalls. Frames are whole snapshots, never deltas, so a dropped
+one is always safe.
+
+Charts feature-detect the capability, so this is opt-in and additive: mock,
+replay, rosbridge, and MQTT sources are untouched and decimate locally exactly as
+before. Several charts can share one source — each acquires its own viewport, so
+they share the socket, the ingest pass, and the ring buffers, and differ only in
+the decimation pass.
+
+Full API, caveats, and the two gotchas (`bufferSize` is ignored for decimating
+sources; `mergeChannels` exposes no decimator) are in
+**[`packages/core/README.md`](packages/core#off-main-thread-decimation--createworkerdatasource)**.
+
+### What it measurably does — and what it does not
+
+Measured on the demo's Worker Pipeline tab via
+[`apps/demo/scripts/measure-worker-path.mjs`](apps/demo/scripts/measure-worker-path.mjs)
+(`pnpm --filter @altara/demo measure`), which drives both paths against the same
+live feed. **2026-09-30, 2019 Intel i9-9880H (16 cores), macOS 26.6, headed
+Chromium via Playwright 1.59, 1600×1000.** One machine, one afternoon — not a
+benchmark suite.
+
+**Load, identical on both paths and stable across runs:**
+
+| | |
+| --- | --- |
+| Inbound | ~5,000 samples/s across 7 channels, 50 messages/s |
+| Behind the plot | ~49,900 samples in the visible window |
+| Sent to the renderer | ~4,990 bucket columns |
+
+That reduction is the reproducible result: **the draw pass touches ~10× fewer
+points than the window holds, and with a worker-backed source it touches zero
+raw samples.** It is a counted quantity, not a timing, and it did not move
+between runs.
+
+**Frame pacing, three 10-second samples per path:**
+
+| Path | Frame interval | Worst frame | Long frames/s |
+| --- | --- | --- | --- |
+| Worker (decimator) | 16.7–22.3 ms | 18.6–35.2 ms | 0–5 |
+| Main thread (local) | 16.7–54.4 ms | 17.6–67.4 ms | 0–16 |
+
+**No speed multiplier is claimed from this.** The ranges overlap, and a second
+run of the same script narrowed the gap further (16.7–29.4 vs 16.7–35.1 ms). Both
+paths reach the same 16.7 ms floor; what differs is the tail, and run-to-run
+variance on this machine is large enough that even the tail difference is not
+something to put a number on. If you need a figure for your own workload, run the
+script on your hardware.
+
+The defensible claim is the structural one: per frame, per channel, the local
+path copies the ring buffer, scans it for the extent, and reduces it to columns —
+three O(samples) passes on the render thread. The worker path does that work
+elsewhere and leaves the renderer O(columns). Whether that shows up as smoother
+frames depends on how much else is competing for the thread.
 
 ## Stability
 
@@ -302,7 +378,7 @@ far has been in the adapter layer. That is a track record, not a guarantee.
 ## Documentation
 
 - **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides, the Cookbook, and Comparisons vs. Grafana / Foxglove.
-- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial` packages, all driven by mock data.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial`. Most tabs run on in-browser generators; the Worker Pipeline tab drives a real WebSocket and needs a local telemetry server, so it is inert on the hosted build.
 
 Or run them locally:
 
@@ -327,7 +403,8 @@ Common commands. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full repositor
 | `pnpm turbo test` | Run unit tests across the workspace |
 | `pnpm turbo lint` | ESLint everywhere |
 | `pnpm --filter @altara/storybook storybook` | Storybook on http://localhost:6006 |
-| `pnpm --filter @altara/demo dev` | Live demo dashboard on http://localhost:5173 |
+| `pnpm --filter @altara/demo dev` | Live demo dashboard on http://localhost:5173 (serves the synthetic telemetry feed too) |
+| `pnpm --filter @altara/demo measure` | Drive both decimation paths in a real browser and print the spread |
 | `pnpm --filter @altara/core dev` | Watch + rebuild `@altara/core` |
 | `pnpm changeset` | Add a release note for a PR |
 | `STORY_FILTER=<substring> node scripts/record-gifs.js` | Record demo GIFs (Storybook must be running; `ffmpeg` required) |
@@ -347,8 +424,9 @@ packages/
 apps/
   storybook/   @altara/storybook — interactive docs (deployed to GH Pages)
   demo/        @altara/demo — live multi-package dashboard (deployed to GH Pages)
+               scripts/ — synthetic telemetry server + worker-path measurement
 docker/ros2/   rosbridge dev environment
-scripts/       GIF recorder, smoke tests, JSDoc check
+scripts/       GIF recorder, smoke tests, JSDoc check, canvas-vs-SVG bench
 docs/          cross-cutting docs (accessibility, etc.)
 .changeset/    pending version bumps
 ```

@@ -39,7 +39,7 @@ A working dashboard with zero configuration — `mockMode` plumbs realistic synt
 
 - **Components** — `TimeSeries`, `Gauge`, `Attitude`, `SignalPanel`, `LiveMap`, `EventLog`, `ConnectionBar`, `MultiAxisPlot`, `DashboardLayout`
 - **Hooks** — `useWebSocket`, `useTelemetry`, `useRingBuffer`
-- **Adapters** — `createMqttAdapter`, `createWorkerDataSource`, `createMockDataSource`, `mergeChannels`
+- **Adapters** — `createMqttAdapter`, `createWorkerDataSource` (worker-side buffering + decimation), `createMockDataSource`, `mergeChannels`
 - **Mock generators** — `sineWave`, `randomWalk`, `stepFunction`, `custom`
 - **Design tokens** — single CSS file (`@altara/core/styles.css`), dark + light themes via CSS custom properties
 
@@ -56,6 +56,124 @@ const source = mergeChannels({
 });
 // <PrimaryFlightDisplay dataSource={source} />
 ```
+
+A merged source exposes no `decimator` — see the worker section below for why.
+
+### Off-main-thread decimation — `createWorkerDataSource`
+
+At high sample rates the expensive part of a chart is not painting, it is
+everything before the paint: copying the ring buffer, scanning it for the y
+extent, and reducing it to one min/max pair per pixel column. Done in
+`requestAnimationFrame`, that work is O(samples buffered) every frame and it
+lands directly on the render path.
+
+`createWorkerDataSource` moves all of it into a Web Worker. The worker owns the
+WebSocket, a `RingBuffer` per channel, and the min/max reduction, and pushes back
+only the geometry the renderer needs:
+
+```ts
+import { createWorkerDataSource, TimeSeries } from '@altara/core';
+
+const source = createWorkerDataSource({
+  url: 'wss://telemetry.example/stream',
+  // Evaluated inside the worker, so it is passed as source text. Return a
+  // number, an object, or an array of either.
+  extractorSource: '(m) => m.samples',
+  bufferSize: 12_000, // per channel, inside the worker
+  flushHz: 60,
+});
+
+<TimeSeries dataSource={source} channels={[{ key: 'gyro_x', label: 'Gyro X' }]} />;
+```
+
+Charts feature-detect the capability. Nothing else has to change: pass a
+worker-backed source and `TimeSeries` / `MultiAxisPlot` take the fast path; pass
+a mock, replay, rosbridge, or MQTT source and they buffer and decimate locally
+exactly as before.
+
+**How the protocol works.** The visible window is anchored to wall-clock
+(`tMin = now - windowMs`), so it advances on its own every frame. Telling the
+worker the range 60 times a second would be pure overhead, so the renderer sends
+a *viewport* only when something real changes — plot width, window length, or the
+channel list — and the worker derives the rest and pushes frames at `flushHz`.
+
+- **Frames carry data-space values, not pixels.** Each channel comes back as
+  per-column min/max plus its own extent. Projection to pixels stays in the
+  renderer, because it depends on sibling channels and threshold lines, which the
+  worker cannot know. That projection is O(columns), not O(samples).
+- **Every frame is a complete snapshot**, never a delta. That is what makes
+  dropping one safe.
+- **Each frame carries an epoch.** Geometry decimated for a superseded viewport
+  is discarded rather than drawn against the wrong width.
+- **One unacknowledged frame at a time.** If the main thread stalls, the worker
+  skips flushes instead of queueing them, so the renderer gets the newest
+  complete snapshot rather than a backlog of stale ones.
+
+**Several charts can share one source.** `decimator.acquire()` hands each
+consumer its own viewport, epoch, and send credit:
+
+```ts
+const view = source.decimator?.acquire();
+view?.setViewport({ channels: ['gyro_x'], windowMs: 10_000, plotW: 800 });
+view?.getFrame(); // latest frame for this consumer, or null
+view?.release();  // when the consumer goes away
+```
+
+The components do this internally, so two charts on one source just work — they
+share the socket, the ingest pass, and the ring buffers, and differ only in the
+decimation pass. You do not need `acquire()` unless you are building your own
+renderer.
+
+**Two things worth knowing:**
+
+- **`bufferSize` on the chart is ignored for decimating sources.** Capacity
+  belongs to the worker; set it in `createWorkerDataSource`.
+- **`mergeChannels` deliberately exposes no `decimator`.** Off-main-thread
+  decimation needs one worker owning every channel in the plot, and a merge spans
+  independent sources by definition. Charts fed a merged source decimate locally,
+  which is correct, just not accelerated. For the fast path, configure one
+  `createWorkerDataSource` with a channel-tagging extractor instead of merging
+  several sources.
+
+Raw delivery is unchanged: `subscribe()` and `getHistory()` still see every
+sample, so `Gauge`, `SignalPanel`, and `Attitude` behave exactly as they always
+did on the same source.
+
+#### Advanced: `WORKER_SOURCE` and `workerImpl`
+
+> **Low-level escape hatch, not the main path.** If you are calling
+> `createWorkerDataSource` normally you can ignore this entire section.
+
+By default the worker is spawned from a Blob URL built out of `WORKER_SOURCE` —
+the worker body, exported as source text. `workerImpl` lets you supply the
+`Worker` yourself, which together make the pipeline inspectable and reusable
+instead of a sealed box:
+
+```ts
+import { WORKER_SOURCE, createWorkerDataSource } from '@altara/core';
+
+// A worker that runs the real library body against a WebSocket you control.
+// Assigning globalThis.WebSocket before evaluating WORKER_SOURCE is the seam:
+// the body resolves its socket constructor from the worker's global scope.
+const source = createWorkerDataSource({
+  url: 'simulated://local',
+  workerImpl: () => new Worker(myWorkerUrl, { type: 'module' }),
+});
+```
+
+Two reasons this is exported:
+
+- **Testing.** A sealed Blob worker cannot be driven deterministically. With
+  `workerImpl` you can inject a double, and with `WORKER_SOURCE` you can run the
+  genuine body under a controlled clock and socket.
+- **Hosts without Blob URLs.** Strict CSP, some Electron configurations, and
+  bundlers that want a real worker chunk all need to construct the worker
+  themselves.
+
+`WORKER_SOURCE` is the bundled output of an internal module. Its *contents* are
+an implementation detail and will change; what is stable is that it is a
+self-contained script which, when evaluated in a worker scope, installs the
+message handler `createWorkerDataSource` talks to.
 
 ### Mock profiles
 
@@ -92,16 +210,21 @@ const source = mergeChannels({
 
 Most React charting libraries re-render a React subtree per update, so paint cost scales with how often the data changes. Altara writes directly to Canvas via `requestAnimationFrame` and keeps the hot path completely out of React. A `RingBuffer` (Float64Array) holds samples; the rAF loop reads from the buffer and paints. React state only tracks UI concerns like connection status.
 
+Above roughly one sample per pixel column the charts switch to min/max
+decimation, keeping the extremes of each column rather than averaging them, so
+short transients survive. With `createWorkerDataSource` that reduction happens in
+a worker and the renderer never touches a raw sample at all.
+
 It also ships the domain-specific components engineers actually need — attitude indicators, live GPS maps, threshold-aware gauges — and a typed rosbridge adapter (in [`@altara/ros`](https://www.npmjs.com/package/@altara/ros)) so a one-line import gets you live ROS2 data on screen.
 
 ## Bundle size
 
-12.2 KB gzipped, enforced in CI by a 30 KB `size-limit` gate. Optional peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `mqtt`, `three`) are dynamically imported and only paid for if you use the components that need them.
+14.4 KB gzipped (`@altara/core@0.2.3`, measured 2026-09-30 with `size-limit`), enforced in CI by a 30 KB gate. Optional peer deps (`leaflet`, `react-leaflet`, `react-grid-layout`, `mqtt`, `three`) are dynamically imported and only paid for if you use the components that need them.
 
 ## Documentation
 
 - **[📚 Storybook](https://jayasaikishanchapparam.github.io/altara/storybook/)** — every component, every prop, with live demos. Plus Guides (Getting started, Connecting ROS2 / MQTT, Mock data, Theming, Performance), Cookbook dashboards, and Comparisons vs. Grafana / Foxglove.
-- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial`, all driven by mock data.
+- **[🛰️ Live demo dashboard](https://jayasaikishanchapparam.github.io/altara/demo/)** — multi-tab showcase combining `core`, `aerospace`, `av`, and `industrial`. Most tabs run on in-browser generators; the Worker Pipeline tab needs a local telemetry server and is inert on the hosted build.
 
 Or run them locally:
 

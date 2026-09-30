@@ -6,8 +6,9 @@ import { AerospaceView } from './views/AerospaceView';
 import { AvView } from './views/AvView';
 import { IndustrialView } from './views/IndustrialView';
 import { ReplayView } from './views/ReplayView';
+import { WorkerPipelineView } from './views/WorkerPipelineView';
 
-type ViewKey = 'gcs' | 'replay' | 'core' | 'aerospace' | 'av' | 'industrial';
+type ViewKey = 'gcs' | 'replay' | 'worker' | 'core' | 'aerospace' | 'av' | 'industrial';
 
 const TABS: { key: ViewKey; label: string; description: string }[] = [
   { key: 'gcs', label: 'Drone GCS', description: 'PFD + map + battery + events over @altara/ros' },
@@ -15,6 +16,11 @@ const TABS: { key: ViewKey; label: string; description: string }[] = [
     key: 'replay',
     label: 'Replay',
     description: 'Synthetic session played back through the AltaraDataSource interface',
+  },
+  {
+    key: 'worker',
+    label: 'Worker Pipeline',
+    description: '5 kHz feed — decimation in a Web Worker, off the render thread',
   },
   { key: 'core', label: 'Telemetry', description: '@altara/core primitives' },
   { key: 'aerospace', label: 'Drone / Aerospace', description: '@altara/aerospace flight instruments' },
@@ -56,17 +62,19 @@ export function App() {
         ))}
       </div>
 
-      <div style={{ padding: '16px 20px 0' }}>
-        <ConnectionBar
-          url="ws://demo.altara.dev:9090"
-          status="connected"
-          latencyMs={14}
-          messagesPerSecond={284}
-        />
-      </div>
+      {/* The Worker Pipeline tab is the only one with a real socket, and it
+          renders its own ConnectionBar with measured values. Every other tab is
+          driven by in-browser generators, so there is no link, latency, or
+          message rate to report — the strip says so instead of inventing them. */}
+      {active !== 'worker' && (
+        <div style={{ padding: '16px 20px 0' }}>
+          <ConnectionBar url="mock://in-browser-generators" status="connected" />
+        </div>
+      )}
 
       {active === 'gcs' && <GcsView />}
       {active === 'replay' && <ReplayView />}
+      {active === 'worker' && <WorkerPipelineView />}
       {active === 'core' && <CoreView />}
       {active === 'aerospace' && <AerospaceView />}
       {active === 'av' && <AvView />}

@@ -17,6 +17,106 @@ export interface TelemetryValue {
   channel?: string;
 }
 
+// ── Worker-side decimation ──────────────────────────────────────────────
+
+/**
+ * What the renderer needs the worker to decimate for. Sent only when one of
+ * these fields actually changes — never per frame. The time window is
+ * wall-clock anchored (`tMin = now - windowMs`), so the worker advances it
+ * itself rather than being told the range 60 times a second.
+ */
+export interface ViewportSpec {
+  /** Channel keys to decimate, in render order. Drives `DecimatedFrame.channels`. */
+  channels: string[];
+  /** Visible time window in milliseconds. */
+  windowMs: number;
+  /** Plot width in **CSS** pixels — one min/max bucket per column. */
+  plotW: number;
+}
+
+/**
+ * One channel's worth of render-ready geometry.
+ *
+ * `mode` mirrors the two branches the charts have always had: above roughly one
+ * sample per pixel column the line is drawn as per-column vertical min/max
+ * segments; below it, as a polyline through the actual samples.
+ *
+ * All y-values are in **data space** — the renderer owns the value→pixel
+ * projection because it depends on sibling channels and threshold lines.
+ */
+export interface DecimatedChannel {
+  /** Matches a key from the requesting `ViewportSpec.channels`. */
+  key: string;
+  /** Geometry encoding — see above. */
+  mode: 'buckets' | 'points';
+  /** `buckets` mode: pixel-column index of each populated bucket. */
+  bucket?: Float64Array;
+  /** `buckets` mode: minimum value in each populated bucket. */
+  minV?: Float64Array;
+  /** `buckets` mode: maximum value in each populated bucket. */
+  maxV?: Float64Array;
+  /** `points` mode: sample timestamps, oldest → newest. */
+  pointT?: Float64Array;
+  /** `points` mode: sample values, oldest → newest. */
+  pointV?: Float64Array;
+  /** Number of visible samples before decimation. Zero means "draw nothing". */
+  visibleCount: number;
+  /** Data-space extent of the visible samples, unpadded. `undefined` when empty. */
+  extent?: { min: number; max: number };
+}
+
+/**
+ * A complete snapshot of everything the renderer should draw this frame.
+ *
+ * Frames are never deltas. That is what makes dropping one always safe, and it
+ * is the property the backpressure scheme leans on: under load the worker
+ * coalesces frames rather than queueing them.
+ */
+export interface DecimatedFrame {
+  /** Viewport generation this frame was decimated against. */
+  epoch: number;
+  /** Monotonic frame counter, used to match acknowledgements. */
+  seq: number;
+  /** Left edge of the window, in unix ms, as computed by the worker. */
+  tMin: number;
+  /** Window width the worker used. */
+  windowMs: number;
+  /** Plot width the worker bucketed against, in CSS pixels. */
+  plotW: number;
+  /** One entry per `ViewportSpec.channels` key, same order. */
+  channels: DecimatedChannel[];
+}
+
+/**
+ * One consumer's handle on a decimating source. Each handle owns an independent
+ * viewport, so several charts can share a source and still get geometry
+ * decimated against their own width and channel set.
+ */
+export interface DecimatorSubscription {
+  /** Declare what to decimate for. Cheap and idempotent — unchanged specs are ignored. */
+  setViewport(spec: ViewportSpec): void;
+  /** Most recent frame accepted for this subscription, or `null` before the first arrives. */
+  getFrame(): DecimatedFrame | null;
+  /** Detach. The source stops decimating for this consumer. Idempotent. */
+  release(): void;
+}
+
+/**
+ * Optional capability advertised by data sources that decimate off the main
+ * thread. Charts feature-detect it: when present the renderer never touches
+ * raw samples, and when absent it falls back to buffering and decimating
+ * locally exactly as before.
+ *
+ * Consumers `acquire()` their own subscription rather than sharing one viewport,
+ * because two charts on a source legitimately need different widths and
+ * channels. Ingest and the ring buffers are shared; only the decimation pass is
+ * per subscription.
+ */
+export interface Decimator {
+  /** Attach a consumer. Release the result when the consumer goes away. */
+  acquire(): DecimatorSubscription;
+}
+
 /**
  * Live data source contract. Every adapter (rosbridge, MQTT, mock,
  * worker) implements this; every component consumes it.
@@ -30,6 +130,13 @@ export interface AltaraDataSource {
   readonly status: ConnectionStatus;
   /** Cleanup — call when the owning component unmounts. */
   destroy(): void;
+  /**
+   * Optional off-main-thread decimation. Sources that can produce render-ready
+   * geometry (today: `createWorkerDataSource`) expose this; everything else
+   * omits it and charts use their local path. Additive — no existing adapter
+   * needs to change.
+   */
+  readonly decimator?: Decimator;
 }
 
 // ── Component prop types ────────────────────────────────────────────────

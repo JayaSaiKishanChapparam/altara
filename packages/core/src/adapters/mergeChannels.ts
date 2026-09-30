@@ -25,6 +25,13 @@ import type { AltaraDataSource, ConnectionStatus, TelemetryValue } from './types
  *
  * An incoming sample's own `channel` (if any) is overwritten by its key here —
  * the key is authoritative.
+ *
+ * The merged source deliberately exposes no `decimator`, even when a child does.
+ * Off-main-thread decimation needs one worker owning every channel in the plot,
+ * and a merge by definition spans several independent sources. Charts fed a
+ * merged source therefore buffer and decimate locally, which is correct — just
+ * not accelerated. To get the fast path, configure one `createWorkerDataSource`
+ * with a channel-tagging extractor instead of merging several.
  */
 export function mergeChannels(sources: Record<string, AltaraDataSource>): AltaraDataSource {
   const entries = Object.entries(sources);
