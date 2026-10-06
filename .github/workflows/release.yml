@@ -19,6 +19,10 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm turbo build
+      # Runs before the action both opens a release PR and publishes one, so a
+      # 1.0.0 cascade like #32 stops here either way.
+      - name: Check for unapproved major bumps
+        run: node scripts/check-no-majors.mjs
       - name: Create release PR or publish
         uses: changesets/action@v1
         with:
