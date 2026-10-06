@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { HorizontalSituationIndicatorProps } from '../types';
 import type { TelemetryValue } from '@altara/core';
 import { readTokens, wrap360, clamp } from '../utils/tokens';
@@ -47,6 +47,8 @@ export function HorizontalSituationIndicator({
     bearing1: b1Prop,
     bearing2: b2Prop,
   });
+  // Bumped by a slow tick so the wrapper's aria-label refreshes.
+  const [, setVersion] = useState(0);
 
   useEffect(() => {
     const s = stateRef.current;
@@ -217,6 +219,13 @@ export function HorizontalSituationIndicator({
       rafRef.current = null;
     };
   }, [size, toFrom, groundSpeed, distanceToWaypoint]);
+
+  // Samples land in stateRef and the rAF loop paints them; neither re-renders,
+  // so without this tick screen-readers would hear the mount-time heading forever.
+  useEffect(() => {
+    const id = setInterval(() => setVersion((n) => (n + 1) % 1_000_000), 500);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div

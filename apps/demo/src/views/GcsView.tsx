@@ -84,9 +84,13 @@ export function GcsView() {
         <div className="demo-card" style={{ display: 'flex', justifyContent: 'center' }}>
           <PrimaryFlightDisplay mockMode size="lg" showFlightDirector />
         </div>
-        <div className="demo-card" style={{ minHeight: 320 }}>
+        <div className="demo-card">
           <h3 className="demo-card-title">LiveMap — GPS track</h3>
-          <LiveMap mockMode />
+          {/* `.vt-live-map` is height:100%, so Leaflet needs an ancestor with a
+              definite height — a min-height alone lets the map grow unbounded. */}
+          <div style={{ height: 420 }}>
+            <LiveMap mockMode />
+          </div>
         </div>
       </div>
 
