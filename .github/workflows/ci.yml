@@ -26,6 +26,10 @@ jobs:
       # publint + attw inspect the packed tarball, so this must follow the build.
       - name: Check packaging (publint + attw)
         run: node scripts/check-packaging.mjs
+      # A peer range that a core minor leaves turns every dependent into a 1.0.0
+      # (#32). Fails on the feature PR and again on the release PR.
+      - name: Check for unapproved major bumps
+        run: node scripts/check-no-majors.mjs
 
   storybook:
     runs-on: ubuntu-latest
