@@ -27,7 +27,9 @@ jobs:
       - name: Check packaging (publint + attw)
         run: node scripts/check-packaging.mjs
       # A peer range that a core minor leaves turns every dependent into a 1.0.0
-      # (#32). Fails on the feature PR and again on the release PR.
+      # (#32). This catches it on the feature PR. CI never runs on the release PR:
+      # changesets pushes it with GITHUB_TOKEN, which doesn't trigger workflows.
+      # The Release workflow runs the same check before publishing.
       - name: Check for unapproved major bumps
         run: node scripts/check-no-majors.mjs
 
