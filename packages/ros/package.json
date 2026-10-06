@@ -1,6 +1,6 @@
 {
   "name": "@altara/ros",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "ROS2 rosbridge adapter for React — pipe live sensor_msgs/* topics (IMU, GPS, battery, range, temperature) into real-time Altara dashboards. Typed factories, auto-reconnect, ROS timestamp normalization.",
   "license": "MIT",
   "type": "commonjs",
