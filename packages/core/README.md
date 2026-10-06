@@ -175,6 +175,30 @@ an implementation detail and will change; what is stable is that it is a
 self-contained script which, when evaluated in a worker scope, installs the
 message handler `createWorkerDataSource` talks to.
 
+### `LiveMap` setup: stylesheet and height
+
+`LiveMap` has two requirements that are easy to miss.
+
+**1. Import Leaflet's stylesheet once in your app.** Without it, every tile loads but nothing positions the tiles, so they stack in normal document flow. The result is scattered tile blocks, and the map's container grows to thousands of pixels tall. `leaflet` is an optional peer dependency, so nothing imports the stylesheet for you.
+
+```ts
+import 'leaflet/dist/leaflet.css';
+```
+
+**2. Give the map's parent a definite height.** `.vt-live-map` is `width: 100%; height: 100%`, so it fills its parent. That only works if the parent has a definite height, such as `height: 420px`, a grid or flex track of fixed size, or a chain of percentage heights back to a fixed ancestor. A parent that only has a `min-height`, or that is sized by its content, is not definite. The percentage then doesn't resolve, and the map takes whatever height the surrounding layout happens to give it, which changes with the viewport. If the stylesheet is also missing, the map grows to thousands of pixels tall.
+
+```tsx
+// ✗ the height depends on whatever else is in the layout
+<div style={{ minHeight: 320 }}>
+  <LiveMap mockMode />
+</div>
+
+// ✓ a definite height for the map to fill
+<div style={{ height: 420 }}>
+  <LiveMap mockMode />
+</div>
+```
+
 ### Mock profiles
 
 `Gauge` takes an optional `mockProfile?: 'sine' | 'ramp'` (default `'sine'`) that's only relevant when `mockMode` is on: `'sine'` sweeps the needle back and forth, while `'ramp'` drains monotonically from max → min then resets — a believable draining-battery demo.

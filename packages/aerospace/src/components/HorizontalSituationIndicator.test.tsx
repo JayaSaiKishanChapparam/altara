@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, cleanup } from '@testing-library/react';
+import { act, render, cleanup } from '@testing-library/react';
 import type { AltaraDataSource, TelemetryValue } from '@altara/core';
 import { HorizontalSituationIndicator } from './HorizontalSituationIndicator';
 
@@ -123,5 +123,37 @@ describe('HorizontalSituationIndicator channel routing', () => {
     const label = getByRole('img').getAttribute('aria-label') ?? '';
     expect(label).toMatch(/heading 90°/);
     expect(label).toMatch(/course 45°/);
+  });
+});
+
+describe('HorizontalSituationIndicator aria-label', () => {
+  // #20: samples land in a ref and are painted by rAF, neither of which
+  // re-renders, so without a refresh tick the label froze at its mount value.
+  it('tracks a live dataSource without any re-render from the parent', () => {
+    const ds = controllableSource();
+    const { getByRole } = render(<HorizontalSituationIndicator dataSource={ds} />);
+    const label = () => getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label()).toMatch(/heading 0°, course 0°/);
+
+    ds.emit(107, 'heading');
+    ds.emit(50, 'course');
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(label()).toMatch(/heading 107°, course 50°/);
+
+    // A second turn, so the test can't pass on a single one-off render.
+    ds.emit(215, 'heading');
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(label()).toMatch(/heading 215°, course 50°/);
+  });
+
+  it('stops refreshing on unmount', () => {
+    const ds = controllableSource();
+    const { unmount } = render(<HorizontalSituationIndicator dataSource={ds} />);
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });
