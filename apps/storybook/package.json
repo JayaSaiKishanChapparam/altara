@@ -1,6 +1,6 @@
 {
   "name": "@altara/storybook",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "description": "Altara — interactive component documentation",
   "scripts": {
