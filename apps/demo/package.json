@@ -1,6 +1,6 @@
 {
   "name": "@altara/demo",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "description": "Altara live demo app — multi-package showcase",
   "type": "module",
