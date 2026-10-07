@@ -49,12 +49,21 @@ export interface DecimatedChannel {
   key: string;
   /** Geometry encoding — see above. */
   mode: 'buckets' | 'points';
-  /** `buckets` mode: pixel-column index of each populated bucket. */
+  /** `buckets` mode: pixel-column index of each populated bucket, ascending. */
   bucket?: Float64Array;
   /** `buckets` mode: minimum value in each populated bucket. */
   minV?: Float64Array;
   /** `buckets` mode: maximum value in each populated bucket. */
   maxV?: Float64Array;
+  /**
+   * `buckets` mode: value of the earliest sample in each populated bucket. With
+   * `lastV`, lets the renderer join adjacent columns into one continuous line
+   * (M4). Optional so a decimator that only sends min/max still works; the
+   * charts then join columns through min/max instead.
+   */
+  firstV?: Float64Array;
+  /** `buckets` mode: value of the latest sample in each populated bucket. See `firstV`. */
+  lastV?: Float64Array;
   /** `points` mode: sample timestamps, oldest → newest. */
   pointT?: Float64Array;
   /** `points` mode: sample values, oldest → newest. */

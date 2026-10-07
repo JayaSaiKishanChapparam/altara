@@ -32,6 +32,14 @@ jobs:
       # The Release workflow runs the same check before publishing.
       - name: Check for unapproved major bumps
         run: node scripts/check-no-majors.mjs
+      # Unit tests stub the canvas with no-op functions, so they can't see what a
+      # chart actually paints. That is how #39 (flat lines and lone spikes drawn
+      # blank) shipped in two releases with every test green. This renders the
+      # real charts in Chromium and checks the pixels.
+      - name: Install Chromium for the pixel test
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Chart pixel test
+        run: pnpm --filter @altara/core test:pixels
 
   storybook:
     runs-on: ubuntu-latest

@@ -76,7 +76,8 @@
     "test": "vitest run",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "generate:worker": "node scripts/generate-worker-source.mjs"
+    "generate:worker": "node scripts/generate-worker-source.mjs",
+    "test:pixels": "node pixel-test/run.mjs"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
