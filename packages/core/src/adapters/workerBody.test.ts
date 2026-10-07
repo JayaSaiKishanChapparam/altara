@@ -252,6 +252,35 @@ describe('worker body — decimated frame protocol', () => {
     expect(c.extent).toEqual({ min: 1, max: 999 });
   });
 
+  it('bucket frames carry per-column first/last (M4) and survive structured clone', () => {
+    const h = new Harness();
+    h.start();
+    h.viewport({ plotW: 4, windowMs: 100_000 });
+    // 40 samples over 4 columns. The value is the sample index, so each column's
+    // first and last are its lowest and highest index.
+    h.feed(40);
+    h.tick();
+
+    // Copy the frame the way postMessage does.
+    const c = chan(structuredClone(h.lastFrame()), 'a');
+    expect(c.mode).toBe('buckets');
+    const n = c.bucket!.length;
+    expect(c.firstV).toBeInstanceOf(Float64Array);
+    expect(c.lastV).toBeInstanceOf(Float64Array);
+    expect(c.firstV!.length).toBe(n);
+    expect(c.lastV!.length).toBe(n);
+    for (let i = 0; i < n; i++) {
+      // Monotonic feed: first is the column min, last is the column max.
+      expect(c.firstV![i]).toBe(c.minV![i]);
+      expect(c.lastV![i]).toBe(c.maxV![i]);
+      // Columns ascend, and each column starts where the previous one ended.
+      if (i > 0) {
+        expect(c.bucket![i]!).toBeGreaterThan(c.bucket![i - 1]!);
+        expect(c.firstV![i]).toBe(c.lastV![i - 1]! + 1);
+      }
+    }
+  });
+
   it('reports an empty channel rather than omitting it', () => {
     const h = new Harness();
     h.start();

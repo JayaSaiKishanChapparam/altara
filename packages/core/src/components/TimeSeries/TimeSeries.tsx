@@ -6,7 +6,12 @@ import type {
   TimeSeriesProps,
 } from '../../adapters/types';
 import { RingBuffer } from '../../utils/RingBuffer';
-import { buildMinMaxBuckets, countVisibleSamples } from '../../utils/minMaxDecimation';
+import {
+  allocBucketScratch,
+  buildMinMaxBuckets,
+  countVisibleSamples,
+  traceM4Column,
+} from '../../utils/minMaxDecimation';
 import { sineWave } from '../../utils/mockData';
 
 interface ChannelState {
@@ -165,10 +170,7 @@ export function TimeSeries({
       : channelStates.map(() => ({
           values: new Float64Array(bufferSize),
           times: new Float64Array(bufferSize),
-          bucketMinY: new Float64Array(bufferSize),
-          bucketMaxY: new Float64Array(bufferSize),
-          bucketSeen: new Uint8Array(bufferSize),
-          bucketTouched: new Uint32Array(bufferSize),
+          buckets: allocBucketScratch(bufferSize),
           len: 0,
         }));
 
@@ -343,10 +345,20 @@ export function TimeSeries({
           // fit rather than blanking the plot for a tick.
           const xScale = plotW / frame.plotW;
           if (fc.mode === 'buckets' && fc.bucket && fc.minV && fc.maxV) {
+            // One continuous path through every column (M4). A decimator that
+            // sends no first/last still gets connected columns, joined via min/max.
+            const firstV = fc.firstV ?? fc.minV;
+            const lastV = fc.lastV ?? fc.maxV;
             for (let i = 0; i < fc.bucket.length; i++) {
-              const x = padLeft + (fc.bucket[i]! + 0.5) * xScale;
-              ctx.moveTo(x, yFor(fc.minV[i]!));
-              ctx.lineTo(x, yFor(fc.maxV[i]!));
+              traceM4Column(
+                ctx,
+                i === 0,
+                padLeft + (fc.bucket[i]! + 0.5) * xScale,
+                yFor(firstV[i]!),
+                yFor(fc.minV[i]!),
+                yFor(fc.maxV[i]!),
+                yFor(lastV[i]!),
+              );
             }
             ctx.stroke();
           } else if (fc.pointT && fc.pointV) {
@@ -374,18 +386,20 @@ export function TimeSeries({
             plotW,
             padLeft,
             yFor,
-            {
-              minY: s.bucketMinY,
-              maxY: s.bucketMaxY,
-              seen: s.bucketSeen,
-              touched: s.bucketTouched,
-            },
+            s.buckets,
           );
+          const b = s.buckets;
           for (let i = 0; i < touchedCount; i++) {
-            const bucket = s.bucketTouched[i]!;
-            const x = padLeft + bucket + 0.5;
-            ctx.moveTo(x, s.bucketMinY[bucket]!);
-            ctx.lineTo(x, s.bucketMaxY[bucket]!);
+            const col = b.touched[i]!;
+            traceM4Column(
+              ctx,
+              i === 0,
+              padLeft + col + 0.5,
+              b.firstY[col]!,
+              b.minY[col]!,
+              b.maxY[col]!,
+              b.lastY[col]!,
+            );
           }
           ctx.stroke();
         } else {
