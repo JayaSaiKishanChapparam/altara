@@ -1,5 +1,16 @@
 # @altara/demo
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [dc22fab]
+  - @altara/core@0.3.2
+  - @altara/aerospace@0.1.6
+  - @altara/av@0.1.4
+  - @altara/industrial@0.1.4
+  - @altara/ros@0.1.3
+
 ## 0.0.10
 
 ### Patch Changes
